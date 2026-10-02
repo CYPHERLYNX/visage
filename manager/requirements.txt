@@ -1,0 +1,4 @@
+# Mien Manager runtime requirements (Windows target)
+PyQt6>=6.6
+numpy>=1.26
+opencv-python>=4.9      # camera capture on Windows

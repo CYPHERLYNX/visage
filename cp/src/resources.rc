@@ -1,0 +1,35 @@
+// resources.rc
+#include "resource.h"
+#include <windows.h>
+
+// Tile image shown on the Face Unlock tile (128x128, dark theme).
+IDB_TILEIMAGE BITMAP "..\\res\\tile.bmp"
+
+// Version stamp: visible in Explorer properties, useful for support.
+1 VERSIONINFO
+FILEVERSION     1,0,0,0
+PRODUCTVERSION  1,0,0,0
+FILEFLAGSMASK   0x3fL
+FILEFLAGS       0x0L
+FILEOS          0x40004L
+FILETYPE        0x2L
+FILESUBTYPE     0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName",      "Mien"
+            VALUE "FileDescription",  "Mien Face Unlock Credential Provider"
+            VALUE "FileVersion",      "1.0.0.0"
+            VALUE "InternalName",     "MienCP"
+            VALUE "OriginalFilename", "MienCP.dll"
+            VALUE "ProductName",      "Mien"
+            VALUE "ProductVersion",   "1.0.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END

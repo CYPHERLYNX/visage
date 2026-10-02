@@ -1,0 +1,1 @@
+"""Mien Manager views."""

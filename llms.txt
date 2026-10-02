@@ -1,0 +1,42 @@
+# Mien
+> Face unlock for Windows 10/11 (x64). An on-device rebuild of jonnyoo/glance for Windows,
+> plus challenge-response anti-spoofing. Face recognition + liveness run locally; sign-in
+> happens via a Credential Provider tile that submits your DPAPI-encrypted Windows password.
+
+## Repo layout
+- `README.md` — user docs: honest security warning, install, permissions, how-it-works,
+  features, privacy/security deep-dive, threat model, build instructions.
+- `DESIGN.md` — the design law ("What if Apple itself made Face ID for Windows?"):
+  calm, confident, plain-English copy; fail-safe behavior; honest security claims.
+- `LICENSE` — MIT, (c) 2026 CYPHERLYNX.
+- `engine/` — face recognition + liveness engine (Python). ArcFace embeddings (512-dim),
+  YuNet face detection, liveness cues: deny cues (screen glare, device rectangle) and
+  confirm cues (blink timing, nose parallax, skin texture), plus challenge-response
+  head-turn prompts (the only mode that defeats replayed video). `selftest.py` is the
+  installer's verification step (pipe protocol + machine config + vault envelope).
+  `mien_engine.py` reads machine-wide defaults from `C:\ProgramData\Mien\config.json`
+  (`match_threshold`, `strictness`; validated, fail-safe to built-in defaults).
+- `cp/` — Credential Provider (native). Windows's plug-in system for third-party lock-screen
+  sign-in options; this tile receives the unlock verdict and submits the stored password.
+- `manager/` — settings/enrollment app (Python). Onboarding (9 head turns), identity
+  management, camera selection, liveness strictness (Light/Heavy/Off, challenge-response
+  toggle), Face Lab debug console (Settings → About, click app icon 5 times).
+- `installer/` — one-click installer. `setup.ps1` installs Python deps, builds native
+  components, registers the Credential Provider tile (needs Administrator once).
+
+## Install / test
+- Install (Windows): download release zip, then
+  `powershell -ExecutionPolicy Bypass -File .\setup.ps1`
+- Build from source: `git clone https://github.com/CYPHERLYNX/mien.git`,
+  then run `.\setup.ps1` as above.
+- Test: run the engine test suite from `engine/` (see that directory's docs for the
+  exact command), and verify unlock end-to-end on the lock screen with Face Lab open.
+
+## Honesty notes (do not soften these)
+- Mien is NOT as secure as Windows Hello: ordinary webcams have no depth sensor.
+- Photo spoofs are defeated with reasonable confidence ONLY with heavy liveness on.
+- Video replay is defeated ONLY with challenge-response liveness on; without it,
+  Mien does not reliably defeat video.
+- Mien unlocks by submitting your stored Windows password via the Credential Provider
+  tile — it is a convenience feature, not a security upgrade.
+- All face data and credentials stay on-device; nothing is sent to a server.
