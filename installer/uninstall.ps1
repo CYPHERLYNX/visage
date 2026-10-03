@@ -83,8 +83,8 @@ if (Test-Path $script:UnregisterCp) {
         Write-Host "[FAILED] cp\unregister.ps1 exited with code $code."
         Write-Host "       The tile may still appear on the lock screen."
         Write-Host "       Re-run this uninstaller after a reboot. If the tile still"
-        Write-Host "       will not go away, the CP worker's docs in cp\ describe the"
-        Write-Host "       registry entries its register.ps1 creates - remove those by hand."
+        Write-Host "       will not go away, see cp\TEST_PLAN.md for the manual"
+        Write-Host "       registry cleanup steps (Safe Mode recovery)."
         $failed = $true
     }
 } else {
