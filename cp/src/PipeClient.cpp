@@ -9,12 +9,39 @@ namespace visage
 
 PipeClient::PipeClient()
     : m_pipe(INVALID_HANDLE_VALUE)
+    , m_hChild(nullptr)
 {
 }
 
 PipeClient::~PipeClient()
 {
     Close();
+}
+
+void PipeClient::KillSpawnedChild()
+{
+    if (m_hChild != nullptr)
+    {
+        DWORD exitCode = 0;
+        if (GetExitCodeProcess(m_hChild, &exitCode) &&
+            exitCode == STILL_ACTIVE)
+        {
+            TerminateProcess(m_hChild, 1);
+        }
+        CloseHandle(m_hChild);
+        m_hChild = nullptr;
+    }
+}
+
+void PipeClient::ReleaseChildHandle()
+{
+    // The pipe is up: the engine is now persistent by design (it serves
+    // future scans). We no longer need the process handle.
+    if (m_hChild != nullptr)
+    {
+        CloseHandle(m_hChild);
+        m_hChild = nullptr;
+    }
 }
 
 void PipeClient::Close()
@@ -26,6 +53,9 @@ void PipeClient::Close()
         CloseHandle(m_pipe);
         m_pipe = INVALID_HANDLE_VALUE;
     }
+    // Safety net: if we spawned an engine but never connected (Connect
+    // failed on every path), do not leave the orphan behind.
+    KillSpawnedChild();
 }
 
 HRESULT PipeClient::TryConnectOnce()
@@ -130,11 +160,13 @@ HRESULT PipeClient::Connect(DWORD connectTimeoutMs, HANDLE cancelEvent)
     {
         if (IsCancelled())
         {
+            KillSpawnedChild();
             return HRESULT_FROM_WIN32(ERROR_CANCELLED);
         }
         ULONGLONG now = GetTickCount64();
         if (now >= deadline)
         {
+            KillSpawnedChild();
             return HRESULT_FROM_WIN32(ERROR_TIMEOUT);
         }
         DWORD remaining = static_cast<DWORD>(deadline - now);
@@ -147,17 +179,20 @@ HRESULT PipeClient::Connect(DWORD connectTimeoutMs, HANDLE cancelEvent)
             hr = TryConnectOnce();
             if (SUCCEEDED(hr))
             {
+                ReleaseChildHandle(); // engine is up; it persists by design
                 return S_OK;
             }
             if (HRESULT_CODE(hr) != ERROR_FILE_NOT_FOUND &&
                 HRESULT_CODE(hr) != ERROR_PIPE_BUSY)
             {
+                KillSpawnedChild();
                 return hr;
             }
             // else: keep waiting until the deadline
         }
         else if (GetLastError() != ERROR_SEM_TIMEOUT)
         {
+            KillSpawnedChild();
             return HRESULT_FROM_WIN32(GetLastError());
         }
     }
@@ -273,7 +308,10 @@ HRESULT PipeClient::SpawnEngine()
 
     VISAGE_TRACE(L"SpawnEngine: started pid=%u", pi.dwProcessId);
     CloseHandle(pi.hThread);
-    CloseHandle(pi.hProcess);
+    // M3 (audit): retain the process handle so a failed start can be
+    // reaped; released once the pipe is up (engine then persists).
+    KillSpawnedChild(); // defensive: never leak a previous child
+    m_hChild = pi.hProcess;
     return S_OK;
 }
 

@@ -31,6 +31,7 @@ public:
     // IUnknown
     STDMETHODIMP QueryInterface(REFIID riid, void** ppv) override
     {
+VISAGE_COM_BEGIN
         if (ppv == nullptr)
         {
             return E_POINTER;
@@ -46,7 +47,8 @@ public:
         }
         AddRef();
         return S_OK;
-    }
+        VISAGE_COM_END
+}
     STDMETHODIMP_(ULONG) AddRef() override
     {
         return static_cast<ULONG>(InterlockedIncrement(&m_cRef));
@@ -65,6 +67,7 @@ public:
     STDMETHODIMP CreateInstance(IUnknown* pUnkOuter, REFIID riid,
                                 void** ppv) override
     {
+VISAGE_COM_BEGIN
         if (ppv == nullptr)
         {
             return E_POINTER;
@@ -82,7 +85,8 @@ public:
         HRESULT hr = pProvider->QueryInterface(riid, ppv);
         pProvider->Release(); // balance the constructor's ref
         return hr;
-    }
+        VISAGE_COM_END
+}
     STDMETHODIMP LockServer(BOOL fLock) override
     {
         if (fLock)
@@ -125,10 +129,18 @@ HRESULT SetRegString(HKEY hRoot, const wchar_t* subKey,
     return (lr == ERROR_SUCCESS) ? S_OK : HRESULT_FROM_WIN32(lr);
 }
 
-void DeleteRegTree(HKEY hRoot, const wchar_t* subKey)
+// M5 (audit): report deletion failures instead of swallowing them.
+// A key that is already absent counts as success (goal state achieved).
+HRESULT DeleteRegTree(HKEY hRoot, const wchar_t* subKey)
 {
     // RegDeleteTreeW removes the key and everything under it.
-    RegDeleteTreeW(hRoot, subKey);
+    LONG lr = RegDeleteTreeW(hRoot, subKey);
+    if (lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND ||
+        lr == ERROR_PATH_NOT_FOUND)
+    {
+        return S_OK;
+    }
+    return HRESULT_FROM_WIN32(lr);
 }
 
 } // namespace visage
@@ -151,6 +163,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID)
 
 STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void** ppv)
 {
+VISAGE_COM_BEGIN
     if (ppv == nullptr)
     {
         return E_POINTER;
@@ -169,6 +182,7 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void** ppv)
     HRESULT hr = pFactory->QueryInterface(riid, ppv);
     pFactory->Release();
     return hr;
+VISAGE_COM_END
 }
 
 STDAPI DllCanUnloadNow()
@@ -178,10 +192,18 @@ STDAPI DllCanUnloadNow()
 
 STDAPI DllRegisterServer()
 {
+VISAGE_COM_BEGIN
     wchar_t dllPath[MAX_PATH];
-    if (GetModuleFileNameW(g_hInst, dllPath, ARRAYSIZE(dllPath)) == 0)
+    // L3 (audit): a return of exactly ARRAYSIZE means the path was
+    // truncated to fit — treat it as failure, not success.
+    DWORD cchPath = GetModuleFileNameW(g_hInst, dllPath, ARRAYSIZE(dllPath));
+    if (cchPath == 0)
     {
         return HRESULT_FROM_WIN32(GetLastError());
+    }
+    if (cchPath == ARRAYSIZE(dllPath))
+    {
+        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
     }
 
     wchar_t clsidKey[128];
@@ -192,7 +214,9 @@ STDAPI DllRegisterServer()
         return hr;
     }
 
-    // 1. COM server registration.
+    // 1. COM server registration. M4 (audit): ANY failure after the first
+    // write rolls the CLSID tree back, so we never leave a half-registration
+    // behind (deleting a not-yet-created key is a harmless no-op).
     wchar_t inprocKey[160];
     hr = StringCchPrintfW(inprocKey, ARRAYSIZE(inprocKey),
                           L"%s\\InprocServer32", clsidKey);
@@ -203,18 +227,21 @@ STDAPI DllRegisterServer()
     hr = visage::SetRegString(HKEY_CLASSES_ROOT, inprocKey, nullptr, dllPath);
     if (FAILED(hr))
     {
+        visage::DeleteRegTree(HKEY_CLASSES_ROOT, clsidKey);
         return hr;
     }
     hr = visage::SetRegString(HKEY_CLASSES_ROOT, inprocKey,
                             L"ThreadingModel", L"Apartment");
     if (FAILED(hr))
     {
+        visage::DeleteRegTree(HKEY_CLASSES_ROOT, clsidKey);
         return hr;
     }
     hr = visage::SetRegString(HKEY_CLASSES_ROOT, clsidKey, nullptr,
                             visage::kProviderName);
     if (FAILED(hr))
     {
+        visage::DeleteRegTree(HKEY_CLASSES_ROOT, clsidKey);
         return hr;
     }
 
@@ -236,21 +263,33 @@ STDAPI DllRegisterServer()
         return hr;
     }
     return S_OK;
+VISAGE_COM_END
 }
 
 STDAPI DllUnregisterServer()
 {
+VISAGE_COM_BEGIN
     wchar_t clsidKey[128];
     wchar_t providerKey[256];
-    if (SUCCEEDED(StringCchPrintfW(clsidKey, ARRAYSIZE(clsidKey),
-                                  L"CLSID\\%s", visage::kClsidString)) &&
-        SUCCEEDED(StringCchPrintfW(providerKey, ARRAYSIZE(providerKey),
-                                   L"%s\\%s", visage::kProvidersKey,
-                                   visage::kClsidString)))
+    HRESULT hr = StringCchPrintfW(clsidKey, ARRAYSIZE(clsidKey),
+                                  L"CLSID\\%s", visage::kClsidString);
+    if (SUCCEEDED(hr))
     {
-        // Only our own two keys. Built-in providers are untouched.
-        visage::DeleteRegTree(HKEY_LOCAL_MACHINE, providerKey);
-        visage::DeleteRegTree(HKEY_CLASSES_ROOT, clsidKey);
+        hr = StringCchPrintfW(providerKey, ARRAYSIZE(providerKey),
+                              L"%s\\%s", visage::kProvidersKey,
+                              visage::kClsidString);
     }
-    return S_OK;
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+    // Only our own two keys. Built-in providers are untouched.
+    // M5 (audit): a failed deletion is now reported, not swallowed.
+    hr = visage::DeleteRegTree(HKEY_LOCAL_MACHINE, providerKey);
+    if (SUCCEEDED(hr))
+    {
+        hr = visage::DeleteRegTree(HKEY_CLASSES_ROOT, clsidKey);
+    }
+    return hr;
+VISAGE_COM_END
 }

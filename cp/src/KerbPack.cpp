@@ -82,12 +82,17 @@ HRESULT BuildKerbUnlockSerialization(const wchar_t* domain,
 
     if (username == nullptr || username[0] == 0)
     {
+        // M2 (audit): honor the "zeroed in all paths" contract even here.
+        // (Currently the caller's VaultCreds destructor would scrub anyway;
+        // this keeps a future caller from leaking.)
+        password.clear();
         return E_INVALIDARG;
     }
     if (cpus == CPUS_UNLOCK_WORKSTATION && logonId == nullptr)
     {
         // Unlocking without the locked session's LUID would hand LSA a
         // serialization it cannot match to a session. Refuse loudly.
+        password.clear(); // M2 (audit): zeroed in all paths.
         return E_INVALIDARG;
     }
 

@@ -57,7 +57,16 @@ private:
     HRESULT SpawnEngine();
     HRESULT ResolvePythonExe(std::wstring& out);
 
+    // M3 (audit): a spawned engine that never brings its pipe up must not
+    // linger as an orphan python.exe. We keep the child handle until the
+    // pipe connects; on success the engine becomes persistent by design
+    // (subsequent scans reuse it) and we just release the handle, on
+    // failure we terminate the child.
+    void KillSpawnedChild();
+    void ReleaseChildHandle();
+
     HANDLE m_pipe;
+    HANDLE m_hChild; // process handle of an engine WE spawned, else null
 };
 
 } // namespace visage

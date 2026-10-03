@@ -133,7 +133,6 @@ private:
     std::wstring m_statusText;         // guarded by m_cs
     LONG    m_attempts;                // failed attempts, guarded by m_cs
     bool    m_authSucceeded;           // guarded by m_cs
-    bool    m_engineAvailable;         // guarded by m_cs
 
     HBITMAP m_hTileBitmap;             // cached tile image (may be null)
 };

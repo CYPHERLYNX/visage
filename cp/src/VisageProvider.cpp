@@ -84,6 +84,7 @@ CVisageProvider::~CVisageProvider()
 
 STDMETHODIMP CVisageProvider::QueryInterface(REFIID riid, void** ppv)
 {
+VISAGE_COM_BEGIN
     if (ppv == nullptr)
     {
         return E_POINTER;
@@ -99,6 +100,7 @@ STDMETHODIMP CVisageProvider::QueryInterface(REFIID riid, void** ppv)
     }
     AddRef();
     return S_OK;
+VISAGE_COM_END
 }
 
 STDMETHODIMP_(ULONG) CVisageProvider::AddRef()
@@ -119,6 +121,7 @@ STDMETHODIMP_(ULONG) CVisageProvider::Release()
 STDMETHODIMP CVisageProvider::SetUsageScenario(
     CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus, DWORD dwFlags)
 {
+VISAGE_COM_BEGIN
     // We exist only on the sign-in screen and the lock screen. Anywhere
     // else (CredUI prompts, password change, ...) we refuse to load, so we
     // can never interfere with those flows.
@@ -142,11 +145,13 @@ STDMETHODIMP CVisageProvider::SetUsageScenario(
     m_dwFlags = dwFlags;
     m_usageSet = true;
     return S_OK;
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageProvider::SetSerialization(
     const CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs)
 {
+VISAGE_COM_BEGIN
     // On CPUS_UNLOCK_WORKSTATION, LogonUI hands us the locked session's
     // serialization. We stash its LogonId so GetSerialization can build an
     // unlock blob LSA will accept. Anything malformed is ignored: the
@@ -168,11 +173,13 @@ STDMETHODIMP CVisageProvider::SetSerialization(
         }
     }
     return S_OK;
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageProvider::Advise(ICredentialProviderEvents* pcpe,
                                    UINT_PTR upAdviseContext)
 {
+VISAGE_COM_BEGIN
     if (pcpe == nullptr)
     {
         return E_POINTER;
@@ -185,10 +192,12 @@ STDMETHODIMP CVisageProvider::Advise(ICredentialProviderEvents* pcpe,
     m_pEvents->AddRef();
     m_upAdviseContext = upAdviseContext;
     return S_OK;
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageProvider::UnAdvise()
 {
+VISAGE_COM_BEGIN
     if (m_pEvents != nullptr)
     {
         m_pEvents->Release();
@@ -196,22 +205,26 @@ STDMETHODIMP CVisageProvider::UnAdvise()
     }
     m_upAdviseContext = 0;
     return S_OK;
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageProvider::GetFieldDescriptorCount(DWORD* pdwCount)
 {
+VISAGE_COM_BEGIN
     if (pdwCount == nullptr)
     {
         return E_POINTER;
     }
     *pdwCount = SFI_NUM_FIELDS;
     return S_OK;
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageProvider::GetFieldDescriptorAt(
     DWORD dwIndex,
     CREDENTIAL_PROVIDER_FIELD_DESCRIPTOR** ppcpfd)
 {
+VISAGE_COM_BEGIN
     if (ppcpfd == nullptr)
     {
         return E_POINTER;
@@ -240,12 +253,14 @@ STDMETHODIMP CVisageProvider::GetFieldDescriptorAt(
     }
     *ppcpfd = pcpfd; // LogonUI frees with CoTaskMemFree
     return S_OK;
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageProvider::GetCredentialCount(DWORD* pdwCount,
                                                DWORD* pdwDefault,
                                                BOOL* pbAutoLogonWithDefault)
 {
+VISAGE_COM_BEGIN
     if (pdwCount == nullptr || pdwDefault == nullptr ||
         pbAutoLogonWithDefault == nullptr)
     {
@@ -262,11 +277,13 @@ STDMETHODIMP CVisageProvider::GetCredentialCount(DWORD* pdwCount,
     *pdwDefault = 0;              // face tile is pre-selected (Glance-like)
     *pbAutoLogonWithDefault = FALSE; // ...but never auto-submits
     return S_OK;
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageProvider::GetCredentialAt(
     DWORD dwIndex, ICredentialProviderCredential** ppcpc)
 {
+VISAGE_COM_BEGIN
     if (ppcpc == nullptr)
     {
         return E_POINTER;
@@ -285,6 +302,7 @@ STDMETHODIMP CVisageProvider::GetCredentialAt(
     }
     *ppcpc = pCred; // refcount starts at 1
     return S_OK;
+VISAGE_COM_END
 }
 
 } // namespace visage

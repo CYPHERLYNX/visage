@@ -83,7 +83,6 @@ CVisageCredential::CVisageCredential(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus,
     , m_state(ScanState::Idle)
     , m_attempts(0)
     , m_authSucceeded(false)
-    , m_engineAvailable(true)
     , m_hTileBitmap(nullptr)
 {
     InterlockedIncrement(&g_cRef);
@@ -143,6 +142,7 @@ CVisageCredential::~CVisageCredential()
 
 STDMETHODIMP CVisageCredential::QueryInterface(REFIID riid, void** ppv)
 {
+VISAGE_COM_BEGIN
     if (ppv == nullptr)
     {
         return E_POINTER;
@@ -158,6 +158,7 @@ STDMETHODIMP CVisageCredential::QueryInterface(REFIID riid, void** ppv)
     }
     AddRef();
     return S_OK;
+VISAGE_COM_END
 }
 
 STDMETHODIMP_(ULONG) CVisageCredential::AddRef()
@@ -226,11 +227,17 @@ HRESULT CVisageCredential::EnsureMessageWindow()
 
 void CVisageCredential::DestroyMessageWindow()
 {
+    // L2 (audit): PostUpdate reads m_hwndMessage under m_cs; take the lock
+    // here too so a worker can never PostMessageW to a destroyed HWND.
+    // (DestroyWindow on a message-only window does not pump messages, and
+    // the worker only ever PostMessageWs, so no deadlock is introduced.)
+    EnterCriticalSection(&m_cs);
     if (m_hwndMessage != nullptr)
     {
         DestroyWindow(m_hwndMessage);
         m_hwndMessage = nullptr;
     }
+    LeaveCriticalSection(&m_cs);
 }
 
 // ---------- Advise / UnAdvise ----------
@@ -238,6 +245,7 @@ void CVisageCredential::DestroyMessageWindow()
 STDMETHODIMP CVisageCredential::Advise(
     ICredentialProviderCredentialEvents* pcpce)
 {
+VISAGE_COM_BEGIN
     if (pcpce == nullptr)
     {
         return E_POINTER;
@@ -256,10 +264,12 @@ STDMETHODIMP CVisageCredential::Advise(
         VISAGE_TRACE(L"Advise: no message window (hr=0x%08x)", hr);
     }
     return S_OK;
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageCredential::UnAdvise()
 {
+VISAGE_COM_BEGIN
     RequestStop(true);
     DestroyMessageWindow();
     if (m_pEvents != nullptr)
@@ -268,12 +278,14 @@ STDMETHODIMP CVisageCredential::UnAdvise()
         m_pEvents = nullptr;
     }
     return S_OK;
+VISAGE_COM_END
 }
 
 // ---------- selection ----------
 
 STDMETHODIMP CVisageCredential::SetSelected(BOOL* pbAutoLogon)
 {
+VISAGE_COM_BEGIN
     if (pbAutoLogon == nullptr)
     {
         return E_POINTER;
@@ -292,22 +304,24 @@ STDMETHODIMP CVisageCredential::SetSelected(BOOL* pbAutoLogon)
     }
     StartScan();
     return S_OK;
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageCredential::SetDeselected()
 {
+VISAGE_COM_BEGIN
     RequestStop(true);
     // A deselect starts a fresh session: attempts reset, tile goes idle.
     // (The engine still enforces its own anti-spoofing per attempt.)
     EnterCriticalSection(&m_cs);
     m_attempts = 0;
     m_authSucceeded = false;
-    m_engineAvailable = true;
     m_state = ScanState::Idle;
     m_statusText = kIdleText;
     LeaveCriticalSection(&m_cs);
     RefreshTile();
     return S_OK;
+VISAGE_COM_END
 }
 
 // ---------- worker thread ----------
@@ -339,8 +353,20 @@ void CVisageCredential::StartScan()
     EnterCriticalSection(&m_cs);
     if (m_hThread != nullptr)
     {
-        LeaveCriticalSection(&m_cs);
-        return; // already running
+        // H1 (audit): the worker never clears m_hThread itself, so after a
+        // normally-completed scan the handle is stale-but-non-null. Reap a
+        // signaled handle here so "Try Again" works without requiring the
+        // user to deselect/reselect the tile first.
+        if (WaitForSingleObject(m_hThread, 0) == WAIT_OBJECT_0)
+        {
+            CloseHandle(m_hThread);
+            m_hThread = nullptr;
+        }
+        else
+        {
+            LeaveCriticalSection(&m_cs);
+            return; // genuinely still running
+        }
     }
     if (m_hCancelEvent != nullptr)
     {
@@ -493,9 +519,6 @@ HRESULT CVisageCredential::RunScan()
     if (FAILED(hr))
     {
         VISAGE_TRACE(L"RunScan: engine connect failed (hr=0x%08x)", hr);
-        EnterCriticalSection(&m_cs);
-        m_engineAvailable = false;
-        LeaveCriticalSection(&m_cs);
         PostUpdate(ScanState::EngineError, kUnavailableText);
         return hr;
     }
@@ -636,9 +659,14 @@ void CVisageCredential::RefreshTile()
     state = m_state;
     LeaveCriticalSection(&m_cs);
 
-    // hwndParent: LogonUI tolerates NULL for field-value pushes; we have no
-    // HWND from OnCreatingWindow on this path. (Verification item: confirm
-    // on Windows that NULL is accepted here.)
+    // hwndParent: NULL here is deliberate, not a placeholder. LogonUI routes
+    // these field-update calls by the advised credential instance, not by
+    // window — in practice it does not dereference hwndParent on this path
+    // (this matches long-standing credential-provider sample practice).
+    // This class has no OnCreatingWindow to capture a "real" HWND from, and
+    // ICredentialProviderCredential does not define one. H3 (audit) stays a
+    // VM gate anyway: if T1 ever shows a tile that does not refresh, this
+    // call is the first suspect.
     m_pEvents->SetFieldString(nullptr, SFI_SUBLABEL, text.c_str());
     m_pEvents->SetFieldString(nullptr, SFI_SUBMIT_BUTTON, ButtonLabelFor(state));
     m_pEvents->SetFieldState(nullptr, SFI_SUBMIT_BUTTON,
@@ -660,6 +688,7 @@ STDMETHODIMP CVisageCredential::GetFieldState(
     CREDENTIAL_PROVIDER_FIELD_STATE* pcpfs,
     CREDENTIAL_PROVIDER_FIELD_INTERACTIVE_STATE* pcpfis)
 {
+VISAGE_COM_BEGIN
     if (pcpfs == nullptr || pcpfis == nullptr)
     {
         return E_POINTER;
@@ -702,10 +731,12 @@ STDMETHODIMP CVisageCredential::GetFieldState(
         *pcpfis = CPFIS_FOCUSED; // Enter = Start / Try Again / Cancel / Sign In
     }
     return S_OK;
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageCredential::GetStringValue(DWORD dwFieldID, PWSTR* ppwsz)
 {
+VISAGE_COM_BEGIN
     if (ppwsz == nullptr)
     {
         return E_POINTER;
@@ -738,10 +769,12 @@ STDMETHODIMP CVisageCredential::GetStringValue(DWORD dwFieldID, PWSTR* ppwsz)
     default:
         return E_FAIL; // tile image has no string value
     }
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageCredential::GetBitmapValue(DWORD dwFieldID, HBITMAP* phbmp)
 {
+VISAGE_COM_BEGIN
     if (phbmp == nullptr)
     {
         return E_POINTER;
@@ -765,16 +798,20 @@ STDMETHODIMP CVisageCredential::GetBitmapValue(DWORD dwFieldID, HBITMAP* phbmp)
     }
     *phbmp = m_hTileBitmap; // LogonUI copies; we keep ownership.
     return S_OK;
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageCredential::GetCheckboxValue(DWORD, BOOL*, PWSTR*)
 {
+VISAGE_COM_BEGIN
     return E_NOTIMPL; // no checkbox fields
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageCredential::GetSubmitButtonValue(DWORD dwFieldID,
                                                    DWORD* pdwAdjacentTo)
 {
+VISAGE_COM_BEGIN
     if (pdwAdjacentTo == nullptr)
     {
         return E_POINTER;
@@ -785,36 +822,49 @@ STDMETHODIMP CVisageCredential::GetSubmitButtonValue(DWORD dwFieldID,
     }
     *pdwAdjacentTo = SFI_SUBLABEL;
     return S_OK;
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageCredential::GetComboBoxValueCount(DWORD, DWORD*, DWORD*)
 {
+VISAGE_COM_BEGIN
     return E_NOTIMPL; // no combo boxes
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageCredential::GetComboBoxValueAt(DWORD, DWORD, PWSTR*)
 {
+VISAGE_COM_BEGIN
     return E_NOTIMPL; // no combo boxes
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageCredential::SetStringValue(HWND, DWORD, PCWSTR)
 {
+VISAGE_COM_BEGIN
     return E_NOTIMPL; // no editable fields
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageCredential::SetCheckboxValue(HWND, DWORD, BOOL, PCWSTR)
 {
+VISAGE_COM_BEGIN
     return E_NOTIMPL; // no checkbox fields
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageCredential::SetComboBoxSelectedValue(HWND, DWORD, DWORD)
 {
+VISAGE_COM_BEGIN
     return E_NOTIMPL; // no combo boxes
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageCredential::CommandLinkClicked(HWND, DWORD)
 {
+VISAGE_COM_BEGIN
     return E_NOTIMPL; // no command links
+VISAGE_COM_END
 }
 
 // ---------- submission ----------
@@ -825,6 +875,7 @@ STDMETHODIMP CVisageCredential::GetSerialization(
     PWSTR* ppwszOptionalStatusText,
     CREDENTIAL_PROVIDER_STATUS_ICON* pcpsiOptionalStatusIcon)
 {
+VISAGE_COM_BEGIN
     if (pcpgsr == nullptr || pcpcs == nullptr)
     {
         return E_POINTER;
@@ -948,6 +999,7 @@ STDMETHODIMP CVisageCredential::GetSerialization(
     pcpcs->cbSerialization = cb;
     *pcpgsr = CPGSR_RETURN_CREDENTIAL_FINISHED;
     return S_OK;
+VISAGE_COM_END
 }
 
 STDMETHODIMP CVisageCredential::ReportResult(
@@ -955,6 +1007,7 @@ STDMETHODIMP CVisageCredential::ReportResult(
     PWSTR* ppwszOptionalStatusText,
     CREDENTIAL_PROVIDER_STATUS_ICON* pcpsiOptionalStatusIcon)
 {
+VISAGE_COM_BEGIN
     if (ppwszOptionalStatusText != nullptr)
     {
         *ppwszOptionalStatusText = nullptr;
@@ -996,6 +1049,7 @@ STDMETHODIMP CVisageCredential::ReportResult(
         }
     }
     return S_OK;
+VISAGE_COM_END
 }
 
 } // namespace visage

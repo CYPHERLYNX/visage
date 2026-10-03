@@ -158,4 +158,27 @@ inline HRESULT DupString(const wchar_t* src, wchar_t** out)
     return S_OK;
 }
 
+// H2 (audit): no C++ exception may cross a COM boundary into LogonUI — an
+// uncaught throw would invoke std::terminate and kill the login screen.
+// Every HRESULT-returning COM/STDAPI entry point wraps its body:
+//
+//   STDMETHODIMP CFoo::Bar(...)
+//   {
+//   VISAGE_COM_BEGIN
+//       ... body ...
+//   VISAGE_COM_END
+//   }
+//
+// which expands to try { ... } catch (...) { trace; return E_FAIL; }.
+// AddRef/Release (Interlocked only) and DllCanUnloadNow (plain compare)
+// cannot throw and are intentionally left unwrapped.
+#define VISAGE_COM_BEGIN try {
+#define VISAGE_COM_END                                                          \
+    }                                                                           \
+    catch (...)                                                                  \
+    {                                                                            \
+        VISAGE_TRACE(L"C++ exception escaping COM method %hs", __FUNCTION__);    \
+        return E_FAIL;                                                           \
+    }
+
 } // namespace visage

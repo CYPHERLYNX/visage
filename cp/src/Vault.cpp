@@ -92,6 +92,24 @@ HRESULT ReadVaultCreds(VaultCreds& out)
     plain.clear(); // plaintext JSON no longer needed in this form
 
     std::map<std::wstring, std::wstring> obj;
+    // M1 (audit): the map's internal wstring copies (including the password
+    // value) were never scrubbed — recoverable from a LogonUI heap dump.
+    // Scrub-on-scope-exit covers EVERY return path below.
+    struct MapScrubber
+    {
+        std::map<std::wstring, std::wstring>& m;
+        ~MapScrubber()
+        {
+            for (auto& kv : m)
+            {
+                if (!kv.second.empty())
+                {
+                    SecureZeroMemory(&kv.second[0],
+                                     kv.second.size() * sizeof(wchar_t));
+                }
+            }
+        }
+    } scrubber{ obj };
     if (!JsonMini::ParseFlatObject(json, obj))
     {
         VISAGE_TRACE(L"ReadVaultCreds: vault JSON malformed");
