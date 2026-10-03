@@ -51,8 +51,10 @@ Visage brings the FaceID-like experience of your iPhone to a Windows PC near you
 
 <a href="https://github.com/CYPHERLYNX/visage/releases" target="_self"><img width="200" src="https://img.shields.io/badge/Download_for_Windows-black.svg" alt="Download for Windows" /></a>
 
-Download the latest release, unzip it, and run `setup.ps1`. It installs the Python dependencies, builds the
-native components, and registers the Visage sign-in tile — one click, no manual steps.
+Download the latest release, unzip it, and run `setup.ps1`. It installs the Python dependencies,
+builds the native sign-in component (needs Visual Studio 2022 with C++ — it tells you exactly
+what to install if it's missing), downloads the face models, and registers the Visage
+sign-in tile — one click, no manual steps.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\setup.ps1

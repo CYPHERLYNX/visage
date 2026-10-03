@@ -310,15 +310,80 @@ try {
 
 # ------------------------------------------------- 6. Credential Provider
 
-Step-Header 6 7 "Registering the Visage sign-in tile (Credential Provider)"
+Step-Header 6 7 "Building + registering the Visage sign-in tile"
 
-if (-not (Test-Path $script:RegisterCp)) {
+$script:SlnPath = Join-Path $script:CpDir "VisageCP.sln"
+$script:DllPath = Join-Path $script:CpDir "VisageCP.dll"
+
+# Finds msbuild.exe via vswhere. Returns the full path, or $null.
+function Find-MSBuild {
+    $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
+    if (-not (Test-Path $vswhere)) { return $null }
+    $msb = & $vswhere -latest -requires Microsoft.Component.MSBuild `
+        -find MSBuild\**\Bin\MSBuild.exe 2>$null | Select-Object -First 1
+    if ($msb -and (Test-Path $msb)) { return $msb }
+    return $null
+}
+
+# --- 6a. build the DLL (skipped when it is already there) ---
+$cpBuilt = $false
+if (Test-Path $script:DllPath) {
+    Record-Result "Sign-in component build" "OK" "VisageCP.dll already present - skipped rebuild."
+    $cpBuilt = $true
+} elseif (-not (Test-Path $script:SlnPath)) {
+    Record-Result "Sign-in component build" "PENDING" `
+        "cp\VisageCP.sln not found - the Credential Provider source is not built yet."
+} else {
+    $msbuild = Find-MSBuild
+    if (-not $msbuild) {
+        Record-Result "Sign-in component build" "PENDING" `
+            "Visual Studio (msbuild) was not found on this PC."
+        Write-Host ""
+        Write-Host "To build the sign-in component:"
+        Write-Host "  1. Install Visual Studio 2022 (Community is free) with the"
+        Write-Host "     'Desktop development with C++' workload, from"
+        Write-Host "     https://visualstudio.microsoft.com/downloads/"
+        Write-Host "  2. Re-run setup.ps1 - it will build and register automatically."
+        Write-Host ""
+    } else {
+        Write-Host "Building VisageCP.sln (Release x64) with msbuild..."
+        Write-Host ""
+        & $msbuild $script:SlnPath /p:Configuration=Release /p:Platform=x64 `
+            /v:minimal /nologo 2>&1 | ForEach-Object { Write-Host "  $_" }
+        if ($LASTEXITCODE -eq 0) {
+            $builtDll = Join-Path $script:CpDir "x64\Release\VisageCP.dll"
+            if (Test-Path $builtDll) {
+                Copy-Item $builtDll $script:DllPath -Force
+                Record-Result "Sign-in component build" "OK" "VisageCP.dll built (Release x64)."
+                $cpBuilt = $true
+            } else {
+                Record-Result "Sign-in component build" "FAILED" `
+                    "msbuild reported success but x64\Release\VisageCP.dll was not produced."
+            }
+        } else {
+            Record-Result "Sign-in component build" "FAILED" `
+                "msbuild exited with code $LASTEXITCODE - see the build output above."
+            Write-Host ""
+            Write-Host "The C++ compiler reported errors (red lines above). Common causes:"
+            Write-Host "  - An older Visual Studio without the v143 toolset."
+            Write-Host "  - A Windows SDK older than 10.0."
+            Write-Host "  Fix what the errors name, then re-run setup.ps1."
+            Write-Host ""
+            Write-Host "Setup stopped."
+            exit 1
+        }
+    }
+}
+
+# --- 6b. register the tile ---
+if (-not $cpBuilt) {
     Record-Result "Credential Provider" "PENDING" `
-        "..\cp\register.ps1 not found - the Credential Provider is not built yet."
+        "Skipped: the sign-in component is not built yet (see the build step above)."
+} elseif (-not (Test-Path $script:RegisterCp)) {
+    Record-Result "Credential Provider" "PENDING" `
+        "cp\register.ps1 not found - cannot register the tile yet."
     Write-Host ""
-    Write-Host "NOTE: the Visage sign-in tile cannot be registered until the CP worker"
-    Write-Host "delivers cp\register.ps1. Everything else installed fine."
-    Write-Host "Re-run setup.ps1 after the CP lands - it will pick up from here."
+    Write-Host "Re-run setup.ps1 once cp\register.ps1 is present - it picks up from here."
 } else {
     Write-Host "Running: cp\register.ps1"
     Write-Host ""
