@@ -383,9 +383,19 @@ HRESULT PipeClient::SendLine(const std::string& jsonUtf8)
 
 void PipeClient::SendCancel()
 {
-    if (IsConnected())
+    // H4 (audit): called from Close(), which runs in the destructor — a
+    // throw here would invoke std::terminate and kill LogonUI. Best effort
+    // only: if even the cancel line cannot be built, just close the pipe.
+    try
     {
-        SendLine("{\"cmd\":\"cancel\"}");
+        if (IsConnected())
+        {
+            SendLine("{\"cmd\":\"cancel\"}");
+        }
+    }
+    catch (...)
+    {
+        VISAGE_TRACE(L"SendCancel: suppressed C++ exception");
     }
 }
 

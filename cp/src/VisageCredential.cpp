@@ -7,6 +7,7 @@
 #include <ntstatus.h>
 #include <map>
 #include <string>
+#include <utility>
 
 #include "resource.h"
 
@@ -181,15 +182,28 @@ STDMETHODIMP_(ULONG) CVisageCredential::Release()
 LRESULT CALLBACK CVisageCredential::MessageWndProc(HWND hwnd, UINT msg,
                                                  WPARAM wp, LPARAM lp)
 {
-    if (msg == WM_VISAGE_SCAN)
+    // H4 (audit): this is a window procedure — a C++ exception escaping
+    // here is undefined behavior and can take down LogonUI. RefreshTile is
+    // itself non-throwing, but this guard is the last line of defense
+    // against any future edit: nothing ever leaves this function via
+    // exception.
+    try
     {
-        auto* self = reinterpret_cast<CVisageCredential*>(
-            GetWindowLongPtrW(hwnd, GWLP_USERDATA));
-        if (self != nullptr)
+        if (msg == WM_VISAGE_SCAN)
         {
-            // wp == 0: refresh the tile from the credential's current state.
-            self->RefreshTile();
+            auto* self = reinterpret_cast<CVisageCredential*>(
+                GetWindowLongPtrW(hwnd, GWLP_USERDATA));
+            if (self != nullptr)
+            {
+                // wp == 0: refresh the tile from the credential's current state.
+                self->RefreshTile();
+            }
+            return 0;
         }
+    }
+    catch (...)
+    {
+        VISAGE_TRACE(L"MessageWndProc: suppressed C++ exception");
         return 0;
     }
     return DefWindowProcW(hwnd, msg, wp, lp);
@@ -328,15 +342,36 @@ VISAGE_COM_END
 
 void CVisageCredential::PostUpdate(ScanState state, const wchar_t* text)
 {
+    // H4 (audit): this runs on the worker thread AND from ScanThreadProc's
+    // own catch block — a throw here would invoke std::terminate and kill
+    // LogonUI. This function never throws; worst case the tile keeps its
+    // last state. The text copy happens OUTSIDE the lock: std::wstring
+    // assignment can throw bad_alloc, and we must never skip
+    // LeaveCriticalSection (that would deadlock the STA thread).
+    std::wstring copy;
+    try
+    {
+        if (text != nullptr)
+        {
+            copy = text;
+        }
+    }
+    catch (...)
+    {
+        VISAGE_TRACE(L"PostUpdate: text copy failed; keeping last state");
+        return;
+    }
+
     // Always apply the state under the lock so the tile's field getters see
     // it even if the message window is gone; the window message then only
     // triggers the LogonUI push (RefreshTile) on the STA thread.
+    // (Move-assignment of std::wstring is noexcept: pointer swap only.)
     HWND hwnd = nullptr;
     EnterCriticalSection(&m_cs);
     m_state = state;
     if (text != nullptr)
     {
-        m_statusText = text;
+        m_statusText = std::move(copy);
     }
     hwnd = m_hwndMessage;
     LeaveCriticalSection(&m_cs);
@@ -648,37 +683,58 @@ HRESULT CVisageCredential::RunScan()
 
 void CVisageCredential::RefreshTile()
 {
+    // H4 (audit): called from MessageWndProc — a window procedure. An
+    // escaping C++ exception there is undefined behavior and can crash
+    // LogonUI. This function never throws; worst case the tile keeps its
+    // last-pushed state. The state copy is guarded separately because it
+    // runs under the lock: a bad_alloc there must still release it.
     if (m_pEvents == nullptr)
     {
         return;
     }
     std::wstring text;
-    ScanState state;
+    ScanState state = ScanState::Idle;
     EnterCriticalSection(&m_cs);
-    text = m_statusText;
-    state = m_state;
+    try
+    {
+        text = m_statusText;
+        state = m_state;
+    }
+    catch (...)
+    {
+        LeaveCriticalSection(&m_cs);
+        VISAGE_TRACE(L"RefreshTile: state copy failed");
+        return;
+    }
     LeaveCriticalSection(&m_cs);
 
-    // hwndParent: NULL here is deliberate, not a placeholder. LogonUI routes
-    // these field-update calls by the advised credential instance, not by
-    // window — in practice it does not dereference hwndParent on this path
-    // (this matches long-standing credential-provider sample practice).
-    // This class has no OnCreatingWindow to capture a "real" HWND from, and
-    // ICredentialProviderCredential does not define one. H3 (audit) stays a
-    // VM gate anyway: if T1 ever shows a tile that does not refresh, this
-    // call is the first suspect.
-    m_pEvents->SetFieldString(nullptr, SFI_SUBLABEL, text.c_str());
-    m_pEvents->SetFieldString(nullptr, SFI_SUBMIT_BUTTON, ButtonLabelFor(state));
-    m_pEvents->SetFieldState(nullptr, SFI_SUBMIT_BUTTON,
-                             SubmitVisible(state)
-                                 ? CPFS_DISPLAY_IN_SELECTED_TILE
-                                 : CPFS_HIDDEN);
+    try
+    {
+        // hwndParent: NULL here is deliberate, not a placeholder. LogonUI routes
+        // these field-update calls by the advised credential instance, not by
+        // window — in practice it does not dereference hwndParent on this path
+        // (this matches long-standing credential-provider sample practice).
+        // This class has no OnCreatingWindow to capture a "real" HWND from, and
+        // ICredentialProviderCredential does not define one. H3 (audit) stays a
+        // VM gate anyway: if T1 ever shows a tile that does not refresh, this
+        // call is the first suspect.
+        m_pEvents->SetFieldString(nullptr, SFI_SUBLABEL, text.c_str());
+        m_pEvents->SetFieldString(nullptr, SFI_SUBMIT_BUTTON, ButtonLabelFor(state));
+        m_pEvents->SetFieldState(nullptr, SFI_SUBMIT_BUTTON,
+                                 SubmitVisible(state)
+                                     ? CPFS_DISPLAY_IN_SELECTED_TILE
+                                     : CPFS_HIDDEN);
 
-    // Every visible state keeps the button focused so Enter just works:
-    // Start / Try Again / Cancel / Sign In. Hidden when terminal.
-    CREDENTIAL_PROVIDER_FIELD_INTERACTIVE_STATE iState =
-        SubmitVisible(state) ? CPFIS_FOCUSED : CPFIS_NONE;
-    m_pEvents->SetFieldInteractiveState(nullptr, SFI_SUBMIT_BUTTON, iState);
+        // Every visible state keeps the button focused so Enter just works:
+        // Start / Try Again / Cancel / Sign In. Hidden when terminal.
+        CREDENTIAL_PROVIDER_FIELD_INTERACTIVE_STATE iState =
+            SubmitVisible(state) ? CPFIS_FOCUSED : CPFIS_NONE;
+        m_pEvents->SetFieldInteractiveState(nullptr, SFI_SUBMIT_BUTTON, iState);
+    }
+    catch (...)
+    {
+        VISAGE_TRACE(L"RefreshTile: field update threw; tile keeps last state");
+    }
 }
 
 // ---------- field getters ----------
