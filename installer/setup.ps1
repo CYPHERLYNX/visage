@@ -127,7 +127,7 @@ Write-Banner
 
 # ------------------------------------------------- 1. OS and Python checks
 
-Step-Header 1 7 "Checking Windows version and Python"
+Step-Header 1 8 "Checking Windows version and Python"
 
 # --- Windows 10/11 x64 ---
 try {
@@ -176,7 +176,7 @@ if ($pyInfo) {
 
 # ------------------------------------------- 2. data dirs + locked-down ACLs
 
-Step-Header 2 7 "Creating C:\ProgramData\Visage (models, identities)"
+Step-Header 2 8 "Creating C:\ProgramData\Visage (models, identities)"
 
 try {
     foreach ($d in @($script:DataDir, $script:ModelsDir, $script:IdentitiesDir)) {
@@ -208,7 +208,7 @@ try {
 
 # ------------------------------------------------- 3. Python dependencies
 
-Step-Header 3 7 "Installing Python dependencies (engine\requirements.txt)"
+Step-Header 3 8 "Installing Python dependencies (engine\requirements.txt)"
 
 if (-not (Test-Path $script:ReqFile)) {
     Record-Result "Python dependencies" "PENDING" `
@@ -238,7 +238,7 @@ if (-not (Test-Path $script:ReqFile)) {
 
 # ------------------------------------------------- 4. face models (YuNet + ArcFace)
 
-Step-Header 4 7 "Downloading face models (YuNet + ArcFace ONNX)"
+Step-Header 4 8 "Downloading face models (YuNet + ArcFace ONNX)"
 
 if (-not (Test-Path $script:FetchModels)) {
     Record-Result "Face models" "PENDING" `
@@ -266,9 +266,73 @@ if (-not (Test-Path $script:FetchModels)) {
     }
 }
 
-# ------------------------------------------------- 5. default config.json
+# ------------------------------------------------- 5. engine package deploy
 
-Step-Header 5 7 "Writing default config"
+Step-Header 5 8 "Deploying the engine (runs as SYSTEM)"
+
+$script:EngineTargetDir = Join-Path $script:DataDir "engine"
+# Runtime modules only: the SYSTEM-spawned pipe server and its imports.
+# (enroll.py / fetch_models.py / selftest.py are setup- and test-time tools
+# and stay out of the privileged directory.)
+$engineModules = @("__init__.py", "visage_engine.py", "pipe_protocol.py",
+                   "vault.py", "identities.py", "liveness.py", "recognition.py")
+try {
+    New-Item -ItemType Directory -Path $script:EngineTargetDir -Force -ErrorAction Stop | Out-Null
+    foreach ($mod in $engineModules) {
+        $src = Join-Path $script:EngineDir $mod
+        if (-not (Test-Path $src)) { throw "engine\$mod is missing from the project checkout" }
+        Copy-Item $src (Join-Path $script:EngineTargetDir $mod) -Force -ErrorAction Stop
+    }
+
+    # D1 (security): this code runs as SYSTEM on the secure desktop. The
+    # directory must be admin-writable-only, or any local user could plant
+    # code that runs as SYSTEM.
+    $systemSid = New-Object System.Security.Principal.SecurityIdentifier("S-1-5-18")
+    $adminSid  = New-Object System.Security.Principal.SecurityIdentifier("S-1-5-32-544")
+    $eacl = New-Object System.Security.AccessControl.DirectorySecurity
+    $eacl.SetAccessRuleProtection($true, $false)
+    $eacl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule(
+        $systemSid, "FullControl", "ContainerInherit, ObjectInherit", "None", "Allow")))
+    $eacl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule(
+        $adminSid, "FullControl", "ContainerInherit, ObjectInherit", "None", "Allow")))
+    Set-Acl -Path $script:EngineTargetDir -AclObject $eacl -ErrorAction Stop
+
+    # Deterministic interpreter for the credential provider: it reads
+    # HKLM\SOFTWARE\Visage\PythonPath first, before any PATH probing.
+    $pyExePath = (Get-Command $script:PythonCmd[0] -ErrorAction Stop).Source
+    New-Item -Path "HKLM:\SOFTWARE\Visage" -Force -ErrorAction Stop | Out-Null
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Visage" -Name "PythonPath" `
+        -Value $pyExePath -ErrorAction Stop
+
+    # Smoke test: "--help" imports the package (catches broken relative
+    # imports, the exact bug class that once shipped here) without starting
+    # the pipe server. Must exit 0. Runs from C:\ProgramData\Visage so that
+    # "python -m engine.visage_engine" resolves exactly like the provider's
+    # own spawn command.
+    Push-Location $script:DataDir
+    try {
+        $code = Invoke-Python @("-m", "engine.visage_engine", "--help")
+    } finally {
+        Pop-Location
+    }
+    if ($code -ne 0) {
+        throw "deployed engine failed its --help smoke test (exit $code) - its imports are broken"
+    }
+    Record-Result "Engine deploy" "OK" `
+        "7 runtime modules copied to C:\ProgramData\Visage\engine\ (SYSTEM + Administrators only); interpreter pinned in HKLM\SOFTWARE\Visage; --help smoke test passed."
+} catch {
+    Record-Result "Engine deploy" "FAILED" "Could not deploy the engine: $($_.Exception.Message)"
+    Write-Host ""
+    Write-Host "The sign-in tile spawns this engine - without it, face unlock cannot work."
+    Write-Host "Fix what the error names, then re-run setup.ps1 (it picks up where it left off)."
+    Write-Host ""
+    Write-Host "Setup stopped."
+    exit 1
+}
+
+# ------------------------------------------------- 6. default config.json
+
+Step-Header 6 8 "Writing default config"
 
 try {
     $needsWrite = $true
@@ -308,9 +372,9 @@ try {
     exit 1
 }
 
-# ------------------------------------------------- 6. Credential Provider
+# ------------------------------------------------- 7. Credential Provider
 
-Step-Header 6 7 "Building + registering the Visage sign-in tile"
+Step-Header 7 8 "Building + registering the Visage sign-in tile"
 
 $script:SlnPath = Join-Path $script:CpDir "VisageCP.sln"
 $script:DllPath = Join-Path $script:CpDir "VisageCP.dll"
@@ -405,9 +469,9 @@ if (-not $cpBuilt) {
     }
 }
 
-# ------------------------------------------------- 7. verify
+# ------------------------------------------------- 8. verify
 
-Step-Header 7 7 "Verifying the install"
+Step-Header 8 8 "Verifying the install"
 
 if (Test-Path $script:SelfTest) {
     Write-Host "Running engine self-test (pipe protocol): python engine\selftest.py"

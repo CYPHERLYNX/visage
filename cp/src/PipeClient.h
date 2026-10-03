@@ -48,7 +48,16 @@ public:
 
     // Pipe / install locations. No user-profile paths anywhere.
     static const wchar_t* PipeName()  { return L"\\\\.\\pipe\\VisageAuth"; }
-    static const wchar_t* EnginePath(){ return L"C:\\ProgramData\\Visage\\engine\\visage_engine.py"; }
+    // The engine is deployed as a PACKAGE at EngineDir()\engine\ (with
+    // __init__.py). It MUST be launched as "python -m engine.visage_engine"
+    // with EngineDir() as the working directory: direct-script execution
+    // would die on the package's relative imports ("from . import ...").
+    // (The flat fake_engine.py used in VM tests also works under -m.)
+    static const wchar_t* EngineDir()   { return L"C:\\ProgramData\\Visage"; }
+    static const wchar_t* EngineModule(){ return L"engine.visage_engine"; }
+    // Existence probe: the package entry module.
+    static const wchar_t* EngineMain()
+    { return L"C:\\ProgramData\\Visage\\engine\\visage_engine.py"; }
     static const wchar_t* RegKey()    { return L"SOFTWARE\\Visage"; }
     static const wchar_t* RegPython() { return L"PythonPath"; }
 

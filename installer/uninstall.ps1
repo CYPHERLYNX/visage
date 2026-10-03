@@ -98,6 +98,13 @@ Write-Host ""
 Write-Host "[2/4] Stopping running Visage processes"
 Write-Host ("-" * 64)
 $procs = Get-Process -Name "Visage*" -ErrorAction SilentlyContinue
+# The SYSTEM-spawned engine runs as python.exe/pythonw.exe, not "Visage*".
+# Identify it by its unmistakable module command line.
+$engineProcs = Get-CimInstance Win32_Process -Filter "Name='python.exe' OR Name='pythonw.exe'" `
+    -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match 'engine\.visage_engine' }
+foreach ($ep in $engineProcs) {
+    try { Stop-Process -Id $ep.ProcessId -Force -ErrorAction Stop } catch { }
+}
 if ($procs) {
     $names = ($procs | Select-Object -ExpandProperty ProcessName -Unique) -join ", "
     $procs | Stop-Process -Force -ErrorAction SilentlyContinue
@@ -140,6 +147,14 @@ if (-not (Test-Path $script:DataDir)) {
             throw "folder still exists after deletion"
         }
         Write-Host "[ OK ] C:\ProgramData\Visage deleted."
+        # setup.ps1 wrote HKLM\SOFTWARE\Visage (PythonPath); remove it too.
+        Remove-Item -Path "HKLM:\SOFTWARE\Visage" -Recurse -Force `
+            -ErrorAction SilentlyContinue
+        if (Test-Path "HKLM:\SOFTWARE\Visage") {
+            Write-Host "[WARN] Could not remove HKLM\SOFTWARE\Visage - remove it by hand in regedit."
+        } else {
+            Write-Host "[ OK ] HKLM\SOFTWARE\Visage removed."
+        }
     } catch {
         Write-Host "[FAILED] Could not delete C:\ProgramData\Visage."
         Write-Host "       Reason: $($_.Exception.Message)"

@@ -53,12 +53,31 @@ On the VM (as admin):
 1. Build Release|x64 (see BUILD.md), copy VisageCP.dll + register.ps1 +
    unregister.ps1 to C:\ProgramData\Visage\cp\.
 2. Install pywin32 in a Python (for the fake engine): pip install pywin32.
-3. Create a TEST vault (test password only, never a real one):
+3. Deploy the FAKE engine as a package (the provider launches
+   "python -m engine.visage_engine" with C:\ProgramData\Visage as cwd):
+     mkdir C:\ProgramData\Visage\engine
+     copy <cp>\test\fake_engine.py C:\ProgramData\Visage\engine\visage_engine.py
+     type nul > C:\ProgramData\Visage\engine\__init__.py
+   Then lock it down exactly like the real installer does (SYSTEM +
+   Administrators only, no inheritance) - the test must prove the ACL
+   story too, not bypass it:
+     icacls C:\ProgramData\Visage\engine /inheritance:r `
+       /grant:r "SYSTEM:(OI)(CI)F" /grant:r "Administrators:(OI)(CI)F"
+   And pin the interpreter the provider will use:
+     New-Item -Path "HKLM:\SOFTWARE\Visage" -Force
+     Set-ItemProperty -Path "HKLM:\SOFTWARE\Visage" -Name "PythonPath" `
+       -Value "<full path to the test python.exe>"
+4. Create a TEST vault (test password only, never a real one):
      cd <cp>\test
      .\make_test_vault.ps1 -Username "<VMUsername>" -Password "<VMPassword>"
    Use the VM account's real password here so the KERB submission can
    actually succeed - it is a throwaway VM.
-4. Run .\register.ps1 elevated. Confirm both registry keys exist.
+5. Run .\register.ps1 elevated. Confirm both registry keys exist.
+6. Sanity: from C:\ProgramData\Visage, run
+     python -m engine.visage_engine --help
+   (with the REAL engine this must exit 0; with the fake it may exit
+   non-zero - what matters is that the provider's spawn command resolves
+   the module at all. If even the import fails, fix the deploy, not the test.)
 
 TEST MATRIX
 -----------

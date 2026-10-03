@@ -263,11 +263,12 @@ HRESULT PipeClient::ResolvePythonExe(std::wstring& out)
 
 HRESULT PipeClient::SpawnEngine()
 {
-    // The engine script must exist; we never execute anything else.
-    DWORD attrs = GetFileAttributesW(EnginePath());
+    // The engine is a package; probe the entry module. We never execute
+    // anything else.
+    DWORD attrs = GetFileAttributesW(EngineMain());
     if (attrs == INVALID_FILE_ATTRIBUTES || (attrs & FILE_ATTRIBUTE_DIRECTORY))
     {
-        VISAGE_TRACE(L"SpawnEngine: engine script not found");
+        VISAGE_TRACE(L"SpawnEngine: engine package not found");
         return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
     }
 
@@ -279,8 +280,11 @@ HRESULT PipeClient::SpawnEngine()
         return hr;
     }
 
-    // Quote both halves; the command line is built, never interpreted by a shell.
-    std::wstring cmdLine = L"\"" + pythonExe + L"\" \"" + EnginePath() + L"\"";
+    // Launch as "-m engine.visage_engine" (NOT as a script path): the engine
+    // package uses relative imports, which only resolve under -m. The
+    // working directory puts the package's parent on sys.path. The command
+    // line is built, never interpreted by a shell.
+    std::wstring cmdLine = L"\"" + pythonExe + L"\" -m " + EngineModule();
 
     // CreateProcessW may modify the buffer, so use a mutable copy.
     std::vector<wchar_t> cmdBuf(cmdLine.begin(), cmdLine.end());
@@ -295,11 +299,11 @@ HRESULT PipeClient::SpawnEngine()
     PROCESS_INFORMATION pi{};
     // NOTE (security): this runs as SYSTEM on the secure desktop, so
     // C:\ProgramData\Visage\engine\ must be ACL'd admin-writable-only by the
-    // installer. We execute exactly one fixed script path.
+    // installer. We execute exactly one fixed module.
     if (!CreateProcessW(nullptr, cmdBuf.data(),
                         nullptr, nullptr, FALSE,
                         CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP,
-                        nullptr, nullptr, &si, &pi))
+                        nullptr, EngineDir(), &si, &pi))
     {
         HRESULT chr = HRESULT_FROM_WIN32(GetLastError());
         VISAGE_TRACE(L"SpawnEngine: CreateProcess failed (hr=0x%08x)", chr);
