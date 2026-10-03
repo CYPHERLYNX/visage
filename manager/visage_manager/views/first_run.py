@@ -83,7 +83,7 @@ class FirstRunWizard(QDialog):
 
     def _welcome_page(self) -> QWidget:
         page, lay = self._page_shell(
-            "Unlock your PC with a glance.",
+            "Unlock your PC with just your face.",
             "Visage learns your face, then signs you in at the Windows lock screen — "
             "no typing, no reaching for a key. Everything runs on this device: "
             "your face data and your password never touch the internet.",

@@ -30,7 +30,7 @@ class HomePage(QWidget):
         title = QLabel("Home")
         title.setObjectName("pageTitle")
         layout.addWidget(title)
-        sub = QLabel("Everything Visage needs to unlock your PC with a glance.")
+        sub = QLabel("Everything Visage needs to unlock your PC with just your face.")
         sub.setObjectName("pageSubtitle")
         layout.addWidget(sub)
         layout.addSpacing(8)

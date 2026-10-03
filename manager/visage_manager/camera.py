@@ -122,16 +122,25 @@ class Camera:
 
 def probe_cameras(max_devices: int = 4) -> list[tuple[int, str]]:
     """Return [(index, label)] for cameras that actually open. Empty list
-    means none found — never raises."""
+    means none found — never raises, and never prints: OpenCV logs scary
+    errors for missing devices, so its stderr is silenced during probing."""
     try:
         import cv2
     except ImportError:
         return []
     found = []
     backend = cv2.CAP_DSHOW if os.name == "nt" else cv2.CAP_ANY
-    for i in range(max_devices):
-        cap = cv2.VideoCapture(i, backend)
-        if cap.isOpened():
-            found.append((i, f"Camera {i}"))
-            cap.release()
+    devnull = open(os.devnull, "w")
+    old_stderr = os.dup(2)
+    try:
+        os.dup2(devnull.fileno(), 2)
+        for i in range(max_devices):
+            cap = cv2.VideoCapture(i, backend)
+            if cap.isOpened():
+                found.append((i, f"Camera {i}"))
+                cap.release()
+    finally:
+        os.dup2(old_stderr, 2)
+        os.close(old_stderr)
+        devnull.close()
     return found
