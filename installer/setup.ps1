@@ -75,14 +75,21 @@ function Test-IsAdmin {
 }
 
 # Runs python with the given arguments, streaming its output so the user sees
-# progress. Returns the process exit code. Never throws.
+# progress. Returns the process exit code as a bare integer. Never throws.
+#
+# IMPORTANT: the child output is routed to the host (Write-Host), NOT to this
+# function's output stream. Callers doing "$code = Invoke-Python ..." must
+# receive ONLY the integer - if child stdout were emitted here, PowerShell
+# would capture (output lines + exit code) as an array and "$code -ne 0"
+# would misbehave (array -ne does filtering, not comparison).
 function Invoke-Python {
     param([Parameter(Mandatory = $true)][string[]]$Arguments)
     $exe = $script:PythonCmd[0]
     $pre = @()
     if ($script:PythonCmd.Count -gt 1) { $pre = $script:PythonCmd[1..($script:PythonCmd.Count - 1)] }
-    & $exe @pre @Arguments
-    return $LASTEXITCODE
+    & $exe @pre @Arguments 2>&1 | ForEach-Object { Write-Host $_ }
+    $code = $LASTEXITCODE
+    return $code
 }
 
 # Finds "python" or the "py" launcher on PATH with version >= 3.10.
@@ -107,6 +114,27 @@ function Find-Python {
         }
     }
     return $null
+}
+
+# Returns the concrete interpreter path via sys.executable, so the
+# "py -3" launcher case pins the real python.exe instead of py.exe
+# (storing py.exe alone would lose the "-3" selector and the provider
+# would launch the wrong Python). Throws when the probe fails.
+# Never returns an empty or non-existent path.
+function Get-PythonExePath {
+    $exe = $script:PythonCmd[0]
+    $pre = @()
+    if ($script:PythonCmd.Count -gt 1) { $pre = $script:PythonCmd[1..($script:PythonCmd.Count - 1)] }
+    # 2>$null: stderr warnings must not pollute the captured stdout line.
+    $out = & $exe @pre @("-c", "import sys; print(sys.executable)") 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        throw "could not resolve the Python interpreter path (probe exit $LASTEXITCODE)"
+    }
+    $path = "$($out | Select-Object -First 1)".Trim()
+    if (-not $path -or -not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        throw "Python reported an unusable interpreter path: '$path'"
+    }
+    return $path
 }
 
 # ---------------------------------------------------------------- 0. admin
@@ -299,7 +327,9 @@ try {
 
     # Deterministic interpreter for the credential provider: it reads
     # HKLM\SOFTWARE\Visage\PythonPath first, before any PATH probing.
-    $pyExePath = (Get-Command $script:PythonCmd[0] -ErrorAction Stop).Source
+    # Resolved via sys.executable so a "py -3" discovery pins the concrete
+    # python.exe, not the py.exe launcher (which would lose the -3).
+    $pyExePath = Get-PythonExePath
     New-Item -Path "HKLM:\SOFTWARE\Visage" -Force -ErrorAction Stop | Out-Null
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Visage" -Name "PythonPath" `
         -Value $pyExePath -ErrorAction Stop

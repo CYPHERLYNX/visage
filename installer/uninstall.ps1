@@ -147,14 +147,6 @@ if (-not (Test-Path $script:DataDir)) {
             throw "folder still exists after deletion"
         }
         Write-Host "[ OK ] C:\ProgramData\Visage deleted."
-        # setup.ps1 wrote HKLM\SOFTWARE\Visage (PythonPath); remove it too.
-        Remove-Item -Path "HKLM:\SOFTWARE\Visage" -Recurse -Force `
-            -ErrorAction SilentlyContinue
-        if (Test-Path "HKLM:\SOFTWARE\Visage") {
-            Write-Host "[WARN] Could not remove HKLM\SOFTWARE\Visage - remove it by hand in regedit."
-        } else {
-            Write-Host "[ OK ] HKLM\SOFTWARE\Visage removed."
-        }
     } catch {
         Write-Host "[FAILED] Could not delete C:\ProgramData\Visage."
         Write-Host "       Reason: $($_.Exception.Message)"
@@ -162,6 +154,21 @@ if (-not (Test-Path $script:DataDir)) {
         Write-Host "       as Administrator. Last resort: delete the folder by hand."
         $failed = $true
     }
+}
+
+# setup.ps1 wrote HKLM\SOFTWARE\Visage (PythonPath). Remove it in ALL cases -
+# even when C:\ProgramData\Visage is already gone (it used to live inside the
+# branch above, so a leftover key survived exactly that scenario).
+$regKey = "HKLM:\SOFTWARE\Visage"
+if (Test-Path $regKey) {
+    Remove-Item -Path $regKey -Recurse -Force -ErrorAction SilentlyContinue
+    if (Test-Path $regKey) {
+        Write-Host "[WARN] Could not remove HKLM\SOFTWARE\Visage - remove it by hand in regedit."
+    } else {
+        Write-Host "[ OK ] HKLM\SOFTWARE\Visage removed."
+    }
+} else {
+    Write-Host "[ OK ] HKLM\SOFTWARE\Visage not present - nothing to remove."
 }
 
 # ------------------------------------------------- 4. optional Python packages
