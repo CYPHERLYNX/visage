@@ -1,11 +1,11 @@
-// MienCredential.h
-// CMienCredential: the single "Face Unlock" tile.
+// VisageCredential.h
+// CVisageCredential: the single "Face Unlock" tile.
 //
 // Implements ICredentialProviderCredential following the SampleV2CredentialProvider
 // pattern. The tile never blocks the UI thread: selecting the tile starts a
-// worker thread that talks JSONL to the Mien engine over \\.\pipe\MienAuth,
+// worker thread that talks JSONL to the Visage engine over \\.\pipe\VisageAuth,
 // and progress is marshaled back to the STA thread through a hidden
-// message-only window (WM_MIEN_SCAN).
+// message-only window (WM_VISAGE_SCAN).
 //
 // State machine (mirrors Glance's lock-screen flow):
 //   Idle -> Scanning -> FaceFound -> Challenge -> Success -> (Enter) -> submitted
@@ -21,11 +21,11 @@
 #include "PipeClient.h"
 #include "Vault.h"
 
-namespace mien
+namespace visage
 {
 
 // Field indices for this credential's tile.
-enum MIEN_FIELD_ID
+enum VISAGE_FIELD_ID
 {
     SFI_TILEIMAGE = 0,
     SFI_LABEL = 1,
@@ -48,13 +48,13 @@ enum class ScanState
     PasswordRejected, // face OK, Windows rejected the saved password
 };
 
-class CMienCredential : public ICredentialProviderCredential
+class CVisageCredential : public ICredentialProviderCredential
 {
 public:
-    CMienCredential(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus,
+    CVisageCredential(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus,
                     DWORD ulAuthPackage,
                     bool haveLogonId, LUID logonId);
-    ~CMienCredential();
+    ~CVisageCredential();
 
     // IUnknown
     STDMETHODIMP QueryInterface(REFIID riid, void** ppv) override;
@@ -100,8 +100,8 @@ public:
 
 private:
     // Non-copyable
-    CMienCredential(const CMienCredential&) = delete;
-    CMienCredential& operator=(const CMienCredential&) = delete;
+    CVisageCredential(const CVisageCredential&) = delete;
+    CVisageCredential& operator=(const CVisageCredential&) = delete;
 
     static DWORD WINAPI ScanThreadProc(LPVOID pv);
     HRESULT RunScan();                 // worker thread body
@@ -138,4 +138,4 @@ private:
     HBITMAP m_hTileBitmap;             // cached tile image (may be null)
 };
 
-} // namespace mien
+} // namespace visage

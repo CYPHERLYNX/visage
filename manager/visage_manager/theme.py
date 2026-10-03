@@ -1,4 +1,4 @@
-"""Mien Manager visual theme.
+"""Visage Manager visual theme.
 
 Apple-grade dark design language: near-black surfaces, one accent blue,
 generous spacing, quiet typography. Every view reads its constants from
@@ -41,7 +41,7 @@ HEADING_SIZE = 17
 BODY_SIZE = 13
 CAPTION_SIZE = 11
 
-APP_NAME = "Mien"
+APP_NAME = "Visage"
 APP_SUBTITLE = "Face unlock for Windows"
 
 STYLESHEET = f"""

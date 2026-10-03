@@ -2,7 +2,7 @@
 
 Calls the PowerShell scripts owned by the CP worker:
 
-    ../cp/register.ps1      — register the Mien credential provider tile
+    ../cp/register.ps1      — register the Visage credential provider tile
     ../cp/unregister.ps1    — remove it
 
 Status is read from ``../cp/status.ps1`` when present; otherwise the view
@@ -20,7 +20,7 @@ from pathlib import Path
 
 from .errors import CredentialProviderError
 
-log = logging.getLogger("mien")
+log = logging.getLogger("visage")
 
 
 def _cp_dir() -> Path:
@@ -76,12 +76,12 @@ def _require_windows(action: str) -> Path:
 
 
 def register() -> str:
-    """Register the Mien tile on the Windows lock screen."""
+    """Register the Visage tile on the Windows lock screen."""
     return _run_ps1(_require_windows("register"))
 
 
 def unregister() -> str:
-    """Remove the Mien tile from the Windows lock screen."""
+    """Remove the Visage tile from the Windows lock screen."""
     return _run_ps1(_require_windows("unregister"))
 
 

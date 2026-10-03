@@ -211,7 +211,7 @@ class AvatarLabel(QLabel):
 
 
 class LogoMark(QLabel):
-    """Mien logo: a rounded square with an eye-like arc, drawn in code."""
+    """Visage logo: a rounded square with an eye-like arc, drawn in code."""
 
     def __init__(self, size: int = 34, parent: QWidget | None = None):
         super().__init__(parent)

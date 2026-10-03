@@ -1,6 +1,6 @@
 """Credential Provider page: the Windows lock-screen tile.
 
-Registers/unregisters Mien's tile via the PowerShell scripts owned by the
+Registers/unregisters Visage's tile via the PowerShell scripts owned by the
 CP worker (../cp/register.ps1 and ../cp/unregister.ps1). Registering needs
 an elevated process — the page says so up front instead of failing
 cryptically.
@@ -30,7 +30,7 @@ class CredentialProviderPage(QWidget):
         layout.addWidget(title)
         sub = QLabel(
             "The Credential Provider is the tile on the Windows lock screen that starts "
-            "a Mien face scan. Register it once; Windows shows it on every lock screen afterwards."
+            "a Visage face scan. Register it once; Windows shows it on every lock screen afterwards."
         )
         sub.setObjectName("pageSubtitle")
         sub.setWordWrap(True)
@@ -66,7 +66,7 @@ class CredentialProviderPage(QWidget):
         lay.addLayout(row)
 
         note = QLabel(
-            "Registration writes to HKLM, so it needs an elevated Mien Manager "
+            "Registration writes to HKLM, so it needs an elevated Visage Manager "
             "(right-click > Run as administrator). Unregistering removes the tile completely."
         )
         note.setObjectName("hint")

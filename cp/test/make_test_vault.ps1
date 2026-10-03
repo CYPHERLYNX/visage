@@ -1,7 +1,7 @@
 # make_test_vault.ps1 - Creates a TEST vault.dat for credential-provider testing.
 # Encrypts {"version":1,"username":...,"domain":...,"password":...} with DPAPI
 # LocalMachine scope, exactly like the real enrollment flow, and writes it to
-# C:\ProgramData\Mien\vault.dat (backing up any existing file first).
+# C:\ProgramData\Visage\vault.dat (backing up any existing file first).
 #
 #   .\make_test_vault.ps1 -Username "Fahad" -Password "test-password-123"
 #   .\make_test_vault.ps1 -Username "DOMAIN\Fahad" -Password "..."
@@ -18,7 +18,7 @@ param(
 $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Security
 
-$dir = "C:\ProgramData\Mien"
+$dir = "C:\ProgramData\Visage"
 if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force $dir | Out-Null }
 
 $vault = Join-Path $dir "vault.dat"

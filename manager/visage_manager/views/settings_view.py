@@ -135,7 +135,7 @@ class SettingsPage(QWidget):
 
         lay.addWidget(self._slider_row(
             "Match confidence",
-            "How closely a face must match before Mien accepts it.",
+            "How closely a face must match before Visage accepts it.",
             [t for t, _ in MATCH_LEVELS],
             self._nearest_level(self.settings.get("match_threshold"), [v for _, v in MATCH_LEVELS]),
             lambda i: self.settings.set("match_threshold", MATCH_LEVELS[i][1]),
@@ -277,7 +277,7 @@ class SettingsPage(QWidget):
 
         lay.addWidget(self._slider_row(
             "Auto-lock session",
-            "How long Mien stays authorized after you unlock it. Afterwards it asks "
+            "How long Visage stays authorized after you unlock it. Afterwards it asks "
             "for your face again instead of trusting the last unlock.",
             [t for t, _ in AUTOLOCK_LEVELS],
             self._nearest_level(self.settings.auto_lock_days, [v for _, v in AUTOLOCK_LEVELS]),

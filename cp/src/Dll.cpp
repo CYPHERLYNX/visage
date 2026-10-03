@@ -1,29 +1,29 @@
 // Dll.cpp
-// DLL entry points, class factory, and self-registration for MienCP.dll.
+// DLL entry points, class factory, and self-registration for VisageCP.dll.
 //
 // Registration writes exactly two keys:
 //   HKCR\CLSID\{794AAC04-6CB6-4C77-A828-27C20D0F820D}\InprocServer32
 //       (default) = full path of this DLL, ThreadingModel = Apartment
 //   HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{...}
-//       (default) = "Mien Face Unlock"
+//       (default) = "Visage Face Unlock"
 // Unregistration removes both. Nothing else in the registry is touched,
 // so unregistering can never disturb the built-in providers.
 #include <windows.h>
-#include <initguid.h> // before Guids.h: exactly one definition of CLSID_MienProvider
+#include <initguid.h> // before Guids.h: exactly one definition of CLSID_VisageProvider
 #include "Guids.h"
-#include "MienProvider.h"
+#include "VisageProvider.h"
 #include "Common.h"
 
 long g_cRef = 0;          // outstanding objects + factory locks
 HINSTANCE g_hInst = nullptr;
 
-namespace mien
+namespace visage
 {
 
-class CMienProviderFactory : public IClassFactory
+class CVisageProviderFactory : public IClassFactory
 {
 public:
-    CMienProviderFactory() : m_cRef(1)
+    CVisageProviderFactory() : m_cRef(1)
     {
         InterlockedIncrement(&g_cRef);
     }
@@ -74,7 +74,7 @@ public:
         {
             return CLASS_E_NOAGGREGATION; // we do not support aggregation
         }
-        auto* pProvider = new (std::nothrow) CMienProvider();
+        auto* pProvider = new (std::nothrow) CVisageProvider();
         if (pProvider == nullptr)
         {
             return E_OUTOFMEMORY;
@@ -104,7 +104,7 @@ private:
 
 const wchar_t* kClsidString =
     L"{794AAC04-6CB6-4C77-A828-27C20D0F820D}";
-const wchar_t* kProviderName = L"Mien Face Unlock";
+const wchar_t* kProviderName = L"Visage Face Unlock";
 const wchar_t* kProvidersKey =
     L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Authentication\\Credential Providers";
 
@@ -131,7 +131,7 @@ void DeleteRegTree(HKEY hRoot, const wchar_t* subKey)
     RegDeleteTreeW(hRoot, subKey);
 }
 
-} // namespace mien
+} // namespace visage
 
 // ---------- standard DLL exports ----------
 
@@ -157,11 +157,11 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void** ppv)
     }
     *ppv = nullptr;
     // IsEqualGUID (guiddef.h); cguid.h's IsEqualCLSID is the same function.
-    if (!IsEqualGUID(rclsid, CLSID_MienProvider))
+    if (!IsEqualGUID(rclsid, CLSID_VisageProvider))
     {
         return CLASS_E_CLASSNOTAVAILABLE;
     }
-    auto* pFactory = new (std::nothrow) mien::CMienProviderFactory();
+    auto* pFactory = new (std::nothrow) visage::CVisageProviderFactory();
     if (pFactory == nullptr)
     {
         return E_OUTOFMEMORY;
@@ -186,7 +186,7 @@ STDAPI DllRegisterServer()
 
     wchar_t clsidKey[128];
     HRESULT hr = StringCchPrintfW(clsidKey, ARRAYSIZE(clsidKey),
-                                 L"CLSID\\%s", mien::kClsidString);
+                                 L"CLSID\\%s", visage::kClsidString);
     if (FAILED(hr))
     {
         return hr;
@@ -200,19 +200,19 @@ STDAPI DllRegisterServer()
     {
         return hr;
     }
-    hr = mien::SetRegString(HKEY_CLASSES_ROOT, inprocKey, nullptr, dllPath);
+    hr = visage::SetRegString(HKEY_CLASSES_ROOT, inprocKey, nullptr, dllPath);
     if (FAILED(hr))
     {
         return hr;
     }
-    hr = mien::SetRegString(HKEY_CLASSES_ROOT, inprocKey,
+    hr = visage::SetRegString(HKEY_CLASSES_ROOT, inprocKey,
                             L"ThreadingModel", L"Apartment");
     if (FAILED(hr))
     {
         return hr;
     }
-    hr = mien::SetRegString(HKEY_CLASSES_ROOT, clsidKey, nullptr,
-                            mien::kProviderName);
+    hr = visage::SetRegString(HKEY_CLASSES_ROOT, clsidKey, nullptr,
+                            visage::kProviderName);
     if (FAILED(hr))
     {
         return hr;
@@ -221,18 +221,18 @@ STDAPI DllRegisterServer()
     // 2. Credential provider enrollment: THIS is what makes LogonUI load us.
     wchar_t providerKey[256];
     hr = StringCchPrintfW(providerKey, ARRAYSIZE(providerKey), L"%s\\%s",
-                          mien::kProvidersKey, mien::kClsidString);
+                          visage::kProvidersKey, visage::kClsidString);
     if (FAILED(hr))
     {
         // Roll back the COM key so we never leave a half-registration.
-        mien::DeleteRegTree(HKEY_CLASSES_ROOT, clsidKey);
+        visage::DeleteRegTree(HKEY_CLASSES_ROOT, clsidKey);
         return hr;
     }
-    hr = mien::SetRegString(HKEY_LOCAL_MACHINE, providerKey, nullptr,
-                            mien::kProviderName);
+    hr = visage::SetRegString(HKEY_LOCAL_MACHINE, providerKey, nullptr,
+                            visage::kProviderName);
     if (FAILED(hr))
     {
-        mien::DeleteRegTree(HKEY_CLASSES_ROOT, clsidKey);
+        visage::DeleteRegTree(HKEY_CLASSES_ROOT, clsidKey);
         return hr;
     }
     return S_OK;
@@ -243,14 +243,14 @@ STDAPI DllUnregisterServer()
     wchar_t clsidKey[128];
     wchar_t providerKey[256];
     if (SUCCEEDED(StringCchPrintfW(clsidKey, ARRAYSIZE(clsidKey),
-                                  L"CLSID\\%s", mien::kClsidString)) &&
+                                  L"CLSID\\%s", visage::kClsidString)) &&
         SUCCEEDED(StringCchPrintfW(providerKey, ARRAYSIZE(providerKey),
-                                   L"%s\\%s", mien::kProvidersKey,
-                                   mien::kClsidString)))
+                                   L"%s\\%s", visage::kProvidersKey,
+                                   visage::kClsidString)))
     {
         // Only our own two keys. Built-in providers are untouched.
-        mien::DeleteRegTree(HKEY_LOCAL_MACHINE, providerKey);
-        mien::DeleteRegTree(HKEY_CLASSES_ROOT, clsidKey);
+        visage::DeleteRegTree(HKEY_LOCAL_MACHINE, providerKey);
+        visage::DeleteRegTree(HKEY_CLASSES_ROOT, clsidKey);
     }
     return S_OK;
 }

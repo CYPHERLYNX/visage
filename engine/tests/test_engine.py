@@ -11,9 +11,9 @@ import cv2
 import numpy as np
 import pytest
 
-from engine import mien_engine, pipe_protocol as proto
+from engine import visage_engine, pipe_protocol as proto
 from engine.identities import IdentityStore
-from engine.mien_engine import Authenticator, ImageListSource, _handle_client
+from engine.visage_engine import Authenticator, ImageListSource, _handle_client
 from engine.recognition import ArcFaceEmbedder, FaceDetection
 
 from .synth import FACE_BOX, base_landmarks, make_face
@@ -126,7 +126,7 @@ def test_authenticate_cancelled(tmp_path):
 def test_authenticate_challenge_path(tmp_path, monkeypatch):
     # Heavy mode, borderline scan -> challenge emitted -> static landmarks
     # cannot satisfy it -> liveness failure.
-    monkeypatch.setattr(mien_engine, "CHALLENGE_TIMEOUT_S", 0.3)
+    monkeypatch.setattr(visage_engine, "CHALLENGE_TIMEOUT_S", 0.3)
     store = IdentityStore(str(tmp_path / "ids.dat"))
     store.add_identity("Fahad", [fixed_embedding()])
     FakeEmbedder.FIXED = fixed_embedding()
@@ -195,7 +195,7 @@ def test_client_extra_field_drops_connection(tmp_path):
 def test_tcp_ping_pong_roundtrip(tmp_path):
     auth = _dummy_auth(tmp_path)
     port = 47639
-    t = threading.Thread(target=mien_engine.serve_tcp, args=(auth, port), daemon=True)
+    t = threading.Thread(target=visage_engine.serve_tcp, args=(auth, port), daemon=True)
     t.start()
     time.sleep(0.5)
     s = socket.create_connection(("127.0.0.1", port), timeout=5)
@@ -213,19 +213,19 @@ def test_tcp_ping_pong_roundtrip(tmp_path):
 
 def test_pipe_sddl_is_strict():
     # SYSTEM + Administrators only, protected from inheritance, no one else.
-    assert mien_engine.PIPE_SDDL == "D:P(A;;GA;;;SY)(A;;GA;;;BA)"
+    assert visage_engine.PIPE_SDDL == "D:P(A;;GA;;;SY)(A;;GA;;;BA)"
 
 
 def test_pipe_security_attributes_absent_off_windows():
     if os.name == "nt":
         pytest.skip("Windows-only check")
-    sa, sd = mien_engine._pipe_security_attributes()
+    sa, sd = visage_engine._pipe_security_attributes()
     assert sa is None and sd is None
 
 
 def test_engine_never_imports_vault_credentials():
     # Trust model regression guard: the engine must not touch the password vault.
-    src = open(mien_engine.__file__).read()
+    src = open(visage_engine.__file__).read()
     assert "from .vault" not in src
     assert "from engine.vault" not in src
     assert "import vault" not in src
@@ -233,7 +233,7 @@ def test_engine_never_imports_vault_credentials():
 
 def test_no_pickle_or_eval_in_package():
     import pathlib
-    pkg = pathlib.Path(mien_engine.__file__).parent
+    pkg = pathlib.Path(visage_engine.__file__).parent
     for path in pkg.glob("*.py"):
         text = path.read_text()
         assert "pickle.loads" not in text, path
@@ -244,7 +244,7 @@ def test_no_pickle_or_eval_in_package():
 
 def test_cli_test_mode_no_face(tmp_path, capsys):
     paths = write_images(tmp_path, np.zeros((320, 320, 3), dtype=np.uint8))
-    rc = mien_engine.main(["--test"] + paths + ["--strictness", "light",
+    rc = visage_engine.main(["--test"] + paths + ["--strictness", "light",
                                                 "--timeout-ms", "1500",
                                                 "--identities", str(tmp_path / "ids.dat")])
     assert rc == 1
@@ -272,13 +272,13 @@ def _write_cfg(tmp_path, obj=None, raw=None):
 
 
 def test_machine_config_missing_is_defaults(tmp_path):
-    cfg = mien_engine.load_machine_config(path=str(tmp_path / "nope.json"))
+    cfg = visage_engine.load_machine_config(path=str(tmp_path / "nope.json"))
     assert cfg["match_threshold"] == 0.66
     assert cfg["strictness"] == "heavy"
 
 
 def test_machine_config_valid_values(tmp_path):
-    cfg = mien_engine.load_machine_config(
+    cfg = visage_engine.load_machine_config(
         path=_write_cfg(tmp_path, {"match_threshold": 0.5, "strictness": "LIGHT"}))
     assert cfg["match_threshold"] == 0.5
     assert cfg["strictness"] == "light"
@@ -288,20 +288,20 @@ def test_machine_config_bad_values_fall_back(tmp_path):
     for bad in ({"match_threshold": "high"}, {"match_threshold": 5.0},
                 {"match_threshold": True}, {"strictness": "paranoid"},
                 {"strictness": 3}):
-        cfg = mien_engine.load_machine_config(path=_write_cfg(tmp_path, bad))
+        cfg = visage_engine.load_machine_config(path=_write_cfg(tmp_path, bad))
         key = "match_threshold" if "match_threshold" in bad else "strictness"
-        assert cfg[key] == mien_engine.MACHINE_CONFIG_DEFAULTS[key], bad
+        assert cfg[key] == visage_engine.MACHINE_CONFIG_DEFAULTS[key], bad
 
 
 def test_machine_config_corrupt_is_defaults(tmp_path):
-    cfg = mien_engine.load_machine_config(path=_write_cfg(tmp_path, raw="{nope"))
-    assert cfg == mien_engine.MACHINE_CONFIG_DEFAULTS
-    cfg = mien_engine.load_machine_config(path=_write_cfg(tmp_path, raw="[1,2]"))
-    assert cfg == mien_engine.MACHINE_CONFIG_DEFAULTS
+    cfg = visage_engine.load_machine_config(path=_write_cfg(tmp_path, raw="{nope"))
+    assert cfg == visage_engine.MACHINE_CONFIG_DEFAULTS
+    cfg = visage_engine.load_machine_config(path=_write_cfg(tmp_path, raw="[1,2]"))
+    assert cfg == visage_engine.MACHINE_CONFIG_DEFAULTS
 
 
 def test_machine_config_unknown_keys_ignored(tmp_path):
-    cfg = mien_engine.load_machine_config(
+    cfg = visage_engine.load_machine_config(
         path=_write_cfg(tmp_path, {"match_threshold": 0.6, "future": {"x": 1}}))
     assert cfg["match_threshold"] == 0.6
     assert "future" not in cfg
@@ -323,6 +323,6 @@ def test_handle_client_uses_configured_strictness_default(tmp_path):
         yield b"".join(script)
 
     sent = []
-    mien_engine._handle_client(make_reader, sent.append, A(),
+    visage_engine._handle_client(make_reader, sent.append, A(),
                                default_strictness="light")
     assert received.get("strictness") == "light"

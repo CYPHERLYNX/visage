@@ -1,8 +1,8 @@
 // Vault.h
-// Reads C:\ProgramData\Mien\vault.dat and decrypts it with DPAPI
+// Reads C:\ProgramData\Visage\vault.dat and decrypts it with DPAPI
 // (LocalMachine scope), yielding the stored Windows credentials.
 //
-// Vault file format (written by the Mien installer / enrollment app):
+// Vault file format (written by the Visage installer / enrollment app):
 //   DPAPI(CRYPTPROTECT_LOCAL_MACHINE)-encrypted UTF-8 JSON:
 //   {"version":1,"username":"...","domain":"...","password":"..."}
 //   - "domain" may be "" for a local account or a UPN-style username.
@@ -20,7 +20,7 @@
 #include <windows.h>
 #include "Common.h"
 
-namespace mien
+namespace visage
 {
 
 struct VaultCreds
@@ -37,7 +37,7 @@ HRESULT ReadVaultCreds(VaultCreds& out);
 
 inline const wchar_t* VaultPath()
 {
-    return L"C:\\ProgramData\\Mien\\vault.dat";
+    return L"C:\\ProgramData\\Visage\\vault.dat";
 }
 
-} // namespace mien
+} // namespace visage

@@ -1,4 +1,4 @@
-LIBRARY MienCP
+LIBRARY VisageCP
 EXPORTS
     DllGetClassObject   PRIVATE
     DllCanUnloadNow     PRIVATE

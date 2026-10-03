@@ -1,7 +1,7 @@
 # Engine interface contract
 
 The Manager never imports engine internals directly — everything goes
-through `mien_manager/engine_bridge.py`. This document records the
+through `visage_manager/engine_bridge.py`. This document records the
 **actual** engine API the bridge adapts to (read from the engine
 sources, not assumed), plus the gaps the Manager works around.
 
@@ -10,7 +10,7 @@ Engine sources live in `../engine/` (owned by the engine worker).
 ## What the bridge uses
 
 **Package import** — `../engine/__init__.py` is loaded as a real package
-(`mien_engine_pkg`) via `importlib` with `submodule_search_locations`,
+(`visage_engine_pkg`) via `importlib` with `submodule_search_locations`,
 so the engine's relative imports (`from .recognition import …`) keep
 working. If anything in the chain fails (no cv2/onnxruntime, no models),
 the bridge falls back to the simulated engine.
@@ -82,7 +82,7 @@ the bridge falls back to the simulated engine.
 3. **No rename** — recapture-with-rename is implemented as
    remove + add.
 4. **No live liveness snapshot** — `LivenessSession` lives inside
-   `mien_engine.authenticate`; Face Lab shows cue definitions and real
+   `visage_engine.authenticate`; Face Lab shows cue definitions and real
    thresholds with "no signal" readings rather than inventing values.
 5. **Capture state machine differs from Glance** — the engine captures
    on gate-pass with no 500ms hold, no 3-frame streak, no 12s

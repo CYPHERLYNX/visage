@@ -45,7 +45,7 @@ from ..engine_bridge import (
 from ..errors import CameraUnavailableError, humanize, log_exception
 from ..widgets import AnimatedCheckmark, Card, PoseStrip, ProgressRing
 
-log = logging.getLogger("mien")
+log = logging.getLogger("visage")
 
 POSE_ARROWS = {
     "center": "",
@@ -60,7 +60,7 @@ POSE_ARROWS = {
 }
 
 # Glance's instruction priority: complete > excessive turn > too far > pose.
-# (Excessive-turn detection is engine-side; the Mien engine doesn't report
+# (Excessive-turn detection is engine-side; the Visage engine doesn't report
 # it, so that rung is documented as a gap rather than invented here.)
 
 
@@ -371,7 +371,7 @@ class EnrollmentWizard(QDialog):
 
     def _start_demo_camera(self) -> None:
         import os
-        os.environ["MIEN_DEMO_CAMERA"] = "1"
+        os.environ["VISAGE_DEMO_CAMERA"] = "1"
         # reset error UI, restart worker in demo mode
         if hasattr(self, "_camera_error_label"):
             self._camera_error_label.hide()

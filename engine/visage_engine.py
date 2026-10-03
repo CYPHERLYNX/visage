@@ -1,14 +1,14 @@
 """
-Mien face-unlock engine — entry point.
+Visage face-unlock engine — entry point.
 
 On Windows it serves the credential provider over the named pipe
-``\\\\.\\pipe\\MienAuth`` (JSONL protocol, see pipe_protocol). On other
+``\\\\.\\pipe\\VisageAuth`` (JSONL protocol, see pipe_protocol). On other
 platforms it falls back to a TCP localhost socket (dev/testing). ``--test``
 mode skips IPC entirely and runs the auth pipeline on image files::
 
-    python mien_engine.py                      # Windows: named pipe server
-    python mien_engine.py --socket 47631       # TCP localhost server (any OS)
-    python mien_engine.py --test face1.jpg face2.jpg [--strictness heavy]
+    python visage_engine.py                      # Windows: named pipe server
+    python visage_engine.py --socket 47631       # TCP localhost server (any OS)
+    python visage_engine.py --test face1.jpg face2.jpg [--strictness heavy]
 
 No network calls happen at runtime. Exit codes: 0 = authenticated (test mode),
 1 = not authenticated, 2 = usage/startup error.
@@ -58,7 +58,7 @@ from .recognition import (
     select_dominant_face,
 )
 
-PIPE_NAME = r"\\.\pipe\MienAuth"
+PIPE_NAME = r"\\.\pipe\VisageAuth"
 DEFAULT_TCP_PORT = 47631
 
 # Strict named-pipe DACL, applied at pipe creation (Windows only).
@@ -79,7 +79,7 @@ PIPE_SDDL = "D:P(A;;GA;;;SY)(A;;GA;;;BA)"
 
 def _log(msg: str) -> None:
     """Human-readable service log line (stderr). Never includes secrets."""
-    print("mien-engine: %s" % msg, file=sys.stderr)
+    print("visage-engine: %s" % msg, file=sys.stderr)
 
 
 def _pipe_security_attributes():
@@ -114,7 +114,7 @@ def _pipe_security_attributes():
         PIPE_SDDL, 1, ctypes.byref(sd), None
     ):
         raise SystemExit(
-            "mien-engine: could not apply the named pipe security descriptor. "
+            "visage-engine: could not apply the named pipe security descriptor. "
             "Refusing to start without it."
         )
     sa = SECURITY_ATTRIBUTES(ctypes.sizeof(SECURITY_ATTRIBUTES), sd, False)
@@ -122,7 +122,7 @@ def _pipe_security_attributes():
 
 
 # ---------------------------------------------------------------------------
-# Machine-wide configuration (C:\ProgramData\Mien\config.json on Windows)
+# Machine-wide configuration (C:\ProgramData\Visage\config.json on Windows)
 # ---------------------------------------------------------------------------
 #
 # Written by installer/setup.ps1; read here once at startup. Only two keys
@@ -139,7 +139,7 @@ MACHINE_CONFIG_DEFAULTS = {
 
 def _machine_config_path() -> str:
     if os.name == "nt":
-        return r"C:\ProgramData\Mien\config.json"
+        return r"C:\ProgramData\Visage\config.json"
     here = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(here, "config.json")
 
@@ -343,7 +343,7 @@ class Authenticator:
         if best_hit is None:
             return proto.msg_failure(
                 "no_match",
-                "Face not recognized. Try again, or add this look in Mien settings.",
+                "Face not recognized. Try again, or add this look in Visage settings.",
             )
         return proto.msg_failure(
             "liveness",
@@ -481,7 +481,7 @@ def serve_tcp(authenticator: Authenticator, port: int = DEFAULT_TCP_PORT,
         srv.bind(("127.0.0.1", port))
     except OSError as exc:
         raise SystemExit(
-            "mien-engine: couldn't start on 127.0.0.1:%d (%s). "
+            "visage-engine: couldn't start on 127.0.0.1:%d (%s). "
             "Another copy may already be running." % (port, exc)
         )
     srv.listen(4)
@@ -540,7 +540,7 @@ def serve_named_pipe(authenticator: Authenticator, pipe_name: str = PIPE_NAME,
         )
         if handle == INVALID_HANDLE_VALUE:
             raise SystemExit(
-                "mien-engine: could not create the named pipe. "
+                "visage-engine: could not create the named pipe. "
                 "Another copy of the engine may already be running."
             )
         connected = kernel32.ConnectNamedPipe(handle, None)
@@ -608,7 +608,7 @@ def cmd_test(args: argparse.Namespace) -> int:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    parser = argparse.ArgumentParser(description="Mien face-unlock engine")
+    parser = argparse.ArgumentParser(description="Visage face-unlock engine")
     parser.add_argument("--model-dir", default=None, help="directory with the ONNX models")
     parser.add_argument("--identities", default=None, help="path to the identities store")
     parser.add_argument("--socket", type=int, default=None,

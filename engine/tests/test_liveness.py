@@ -2,7 +2,7 @@
 response, and the Face Lab-style diagnostics.
 
 Cue semantics replicate Glance's design (see module docstrings for the
-replicated-vs-interpreted split); the challenge-response round is Mien's
+replicated-vs-interpreted split); the challenge-response round is Visage's
 extension beyond Glance.
 """
 

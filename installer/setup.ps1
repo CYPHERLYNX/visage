@@ -1,17 +1,17 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Mien Setup - one-click installer for face unlock on Windows 10/11.
+    Visage Setup - one-click installer for face unlock on Windows 10/11.
 
 .DESCRIPTION
-    Installs Mien (face unlock for Windows) with zero manual steps:
+    Installs Visage (face unlock for Windows) with zero manual steps:
       1. Checks Windows 10/11 x64 and Python 3.10+.
-      2. Creates C:\ProgramData\Mien (models\, identities\) locked to
+      2. Creates C:\ProgramData\Visage (models\, identities\) locked to
          SYSTEM + Administrators.
       3. Installs the engine's Python dependencies.
       4. Downloads the YuNet + ArcFace ONNX models (hash-verified).
       5. Writes the default config.json.
-      6. Registers the Mien Credential Provider sign-in tile.
+      6. Registers the Visage Credential Provider sign-in tile.
       7. Verifies the install (engine self-test, or a manual checklist).
 
     Idempotent: re-running setup.ps1 repairs a partial install instead of
@@ -33,7 +33,7 @@ $script:ReqFile       = Join-Path $script:EngineDir "requirements.txt"
 $script:FetchModels   = Join-Path $script:EngineDir "fetch_models.py"
 $script:SelfTest      = Join-Path $script:EngineDir "selftest.py"
 $script:RegisterCp    = Join-Path $script:CpDir "register.ps1"
-$script:DataDir       = "C:\ProgramData\Mien"
+$script:DataDir       = "C:\ProgramData\Visage"
 $script:ModelsDir     = Join-Path $script:DataDir "models"
 $script:IdentitiesDir = Join-Path $script:DataDir "identities"
 $script:ConfigPath    = Join-Path $script:DataDir "config.json"
@@ -46,7 +46,7 @@ $script:PythonCmd  = $null # e.g. @("python") or @("py", "-3")
 function Write-Banner {
     Write-Host ""
     Write-Host "================================================================"
-    Write-Host "  Mien Setup - face unlock for Windows"
+    Write-Host "  Visage Setup - face unlock for Windows"
     Write-Host "================================================================"
     Write-Host ""
 }
@@ -113,9 +113,9 @@ function Find-Python {
 
 if (-not (Test-IsAdmin)) {
     Write-Host ""
-    Write-Host "Mien Setup needs to run as Administrator."
+    Write-Host "Visage Setup needs to run as Administrator."
     Write-Host "It registers a Windows sign-in component and writes protected"
-    Write-Host "files under C:\ProgramData\Mien. No admin rights, no install."
+    Write-Host "files under C:\ProgramData\Visage. No admin rights, no install."
     Write-Host ""
     Write-Host "Requesting elevation now - approve the UAC prompt to continue."
     $argList = '-NoProfile -ExecutionPolicy Bypass -File "' + $PSCommandPath + '"'
@@ -137,7 +137,7 @@ try {
     $caption = $os.Caption
 } catch {
     Record-Result "Windows check" "FAILED" `
-        "Could not read the Windows version. Mien needs Windows 10 or 11, 64-bit."
+        "Could not read the Windows version. Visage needs Windows 10 or 11, 64-bit."
     Write-Host ""
     Write-Host "Setup cannot continue on this machine. Nothing was installed."
     exit 1
@@ -149,7 +149,7 @@ if ($build -ge 10240 -and $is64) {
     Record-Result "Windows check" "OK" "$caption (build $build), 64-bit. Detected as $winLabel."
 } elseif ($build -ne 0) {
     Record-Result "Windows check" "FAILED" `
-        "Found '$caption' (build $build). Mien needs Windows 10 or 11, 64-bit. Setup stopped."
+        "Found '$caption' (build $build). Visage needs Windows 10 or 11, 64-bit. Setup stopped."
     Write-Host ""
     Write-Host "Setup cannot continue on this machine. Nothing was installed."
     exit 1
@@ -176,7 +176,7 @@ if ($pyInfo) {
 
 # ------------------------------------------- 2. data dirs + locked-down ACLs
 
-Step-Header 2 7 "Creating C:\ProgramData\Mien (models, identities)"
+Step-Header 2 7 "Creating C:\ProgramData\Visage (models, identities)"
 
 try {
     foreach ($d in @($script:DataDir, $script:ModelsDir, $script:IdentitiesDir)) {
@@ -197,10 +197,10 @@ try {
         Set-Acl -Path $d -AclObject $acl -ErrorAction Stop
     }
     Record-Result "Data folders" "OK" `
-        "C:\ProgramData\Mien\, models\, identities\ created; ACLs = SYSTEM + Administrators only."
+        "C:\ProgramData\Visage\, models\, identities\ created; ACLs = SYSTEM + Administrators only."
 } catch {
     Record-Result "Data folders" "FAILED" `
-        "Could not create or lock down C:\ProgramData\Mien. Try running setup again as Administrator."
+        "Could not create or lock down C:\ProgramData\Visage. Try running setup again as Administrator."
     Write-Host ""
     Write-Host "Setup stopped. Nothing else was installed."
     exit 1
@@ -259,7 +259,7 @@ if (-not (Test-Path $script:FetchModels)) {
         Write-Host "  3. Re-run setup.ps1 - files that already downloaded and verified"
         Write-Host "     are kept, so it resumes instead of starting over."
         Write-Host "  4. If the script reported a hash mismatch, delete"
-        Write-Host "     C:\ProgramData\Mien\models and re-run setup.ps1 for clean copies."
+        Write-Host "     C:\ProgramData\Visage\models and re-run setup.ps1 for clean copies."
         Write-Host ""
         Write-Host "Setup stopped."
         exit 1
@@ -299,7 +299,7 @@ try {
         $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
         [System.IO.File]::WriteAllText($script:ConfigPath, $json, $utf8NoBom)
         Record-Result "Default config" "OK" `
-            "Wrote C:\ProgramData\Mien\config.json (match threshold 0.66, strictness heavy)."
+            "Wrote C:\ProgramData\Visage\config.json (match threshold 0.66, strictness heavy)."
     }
 } catch {
     Record-Result "Default config" "FAILED" "Could not write config.json: $($_.Exception.Message)"
@@ -310,13 +310,13 @@ try {
 
 # ------------------------------------------------- 6. Credential Provider
 
-Step-Header 6 7 "Registering the Mien sign-in tile (Credential Provider)"
+Step-Header 6 7 "Registering the Visage sign-in tile (Credential Provider)"
 
 if (-not (Test-Path $script:RegisterCp)) {
     Record-Result "Credential Provider" "PENDING" `
         "..\cp\register.ps1 not found - the Credential Provider is not built yet."
     Write-Host ""
-    Write-Host "NOTE: the Mien sign-in tile cannot be registered until the CP worker"
+    Write-Host "NOTE: the Visage sign-in tile cannot be registered until the CP worker"
     Write-Host "delivers cp\register.ps1. Everything else installed fine."
     Write-Host "Re-run setup.ps1 after the CP lands - it will pick up from here."
 } else {
@@ -325,7 +325,7 @@ if (-not (Test-Path $script:RegisterCp)) {
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script:RegisterCp
     $code = $LASTEXITCODE
     if ($code -eq 0) {
-        Record-Result "Credential Provider" "OK" "Mien sign-in tile registered with Windows."
+        Record-Result "Credential Provider" "OK" "Visage sign-in tile registered with Windows."
     } else {
         Record-Result "Credential Provider" "FAILED" "cp\register.ps1 exited with code $code."
         Write-Host ""
@@ -364,11 +364,11 @@ if (Test-Path $script:SelfTest) {
         "engine\selftest.py not found - showing the manual checklist instead."
     Write-Host ""
     Write-Host "Manual verification checklist:"
-    Write-Host "  1. The Mien tile should appear on the sign-in screen."
+    Write-Host "  1. The Visage tile should appear on the sign-in screen."
     Write-Host "     Press Win+L to lock Windows and look for it."
     Write-Host "  2. If the tile is missing, reboot once - Windows loads"
     Write-Host "     credential providers at boot."
-    Write-Host "  3. Enroll your face in Mien Manager BEFORE testing unlock"
+    Write-Host "  3. Enroll your face in Visage Manager BEFORE testing unlock"
     Write-Host "     (see the 3 steps below) - the tile does nothing until then."
     Write-Host "  4. If the camera light never comes on, close any other app"
     Write-Host "     using the camera (Zoom, Teams, browser tabs) and try again."
@@ -380,13 +380,13 @@ Write-Host ""
 Write-Host "================================================================"
 if ($script:HadFailure) {
     $exitCode = 1
-    Write-Host "  Mien Setup finished WITH FAILURES"
+    Write-Host "  Visage Setup finished WITH FAILURES"
 } elseif ($script:HadPending) {
     $exitCode = 2
-    Write-Host "  Mien Setup finished with PENDING steps"
+    Write-Host "  Visage Setup finished with PENDING steps"
 } else {
     $exitCode = 0
-    Write-Host "  Mien Setup complete"
+    Write-Host "  Visage Setup complete"
 }
 Write-Host "================================================================"
 Write-Host ""
@@ -397,12 +397,12 @@ foreach ($r in $script:Results) {
 }
 Write-Host ""
 Write-Host "What was installed:"
-Write-Host "  - Data folder:      C:\ProgramData\Mien\"
+Write-Host "  - Data folder:      C:\ProgramData\Visage\"
 Write-Host "                      (models\, identities\, config.json - SYSTEM + Administrators only)"
 Write-Host "  - Python packages:  from engine\requirements.txt"
-Write-Host "  - Face models:      YuNet + ArcFace (ONNX) in C:\ProgramData\Mien\models\"
+Write-Host "  - Face models:      YuNet + ArcFace (ONNX) in C:\ProgramData\Visage\models\"
 if (($script:Results | Where-Object { $_.Name -eq "Credential Provider" }).Status -eq "OK") {
-    Write-Host "  - Sign-in tile:     Mien Credential Provider registered"
+    Write-Host "  - Sign-in tile:     Visage Credential Provider registered"
 } else {
     Write-Host "  - Sign-in tile:     NOT registered yet (see PENDING step above)"
 }
@@ -413,7 +413,7 @@ if ($script:HadPending) {
     Write-Host ""
 }
 Write-Host "To start using face unlock (3 steps):"
-Write-Host "  1. Open the Mien Manager app (Start menu -> Mien Manager)."
+Write-Host "  1. Open the Visage Manager app (Start menu -> Visage Manager)."
 Write-Host '  2. Click "Enroll face" and follow the on-screen guide.'
 Write-Host "  3. Done. Press Win+L to lock Windows, then look at the camera."
 Write-Host ""

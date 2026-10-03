@@ -4,7 +4,7 @@
 
 #include <vector>
 
-namespace mien
+namespace visage
 {
 
 PipeClient::PipeClient()
@@ -114,12 +114,12 @@ HRESULT PipeClient::Connect(DWORD connectTimeoutMs, HANDLE cancelEvent)
 
     if (err != ERROR_FILE_NOT_FOUND)
     {
-        MIEN_TRACE(L"Connect: unexpected error %u", err);
+        VISAGE_TRACE(L"Connect: unexpected error %u", err);
         return hr;
     }
 
     // No engine running: spawn it, then wait for the pipe to appear.
-    MIEN_TRACE(L"Connect: engine not running, spawning");
+    VISAGE_TRACE(L"Connect: engine not running, spawning");
     hr = SpawnEngine();
     if (FAILED(hr))
     {
@@ -167,7 +167,7 @@ HRESULT PipeClient::ResolvePythonExe(std::wstring& out)
 {
     out.clear();
 
-    // 1. Mien's own configuration, written by the installer (admin-owned).
+    // 1. Visage's own configuration, written by the installer (admin-owned).
     {
         HKEY hKey = nullptr;
         if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, RegKey(), 0, KEY_READ, &hKey) == ERROR_SUCCESS)
@@ -187,7 +187,7 @@ HRESULT PipeClient::ResolvePythonExe(std::wstring& out)
                     RegCloseKey(hKey);
                     return S_OK;
                 }
-                MIEN_TRACE(L"ResolvePythonExe: configured path missing: %s", buf);
+                VISAGE_TRACE(L"ResolvePythonExe: configured path missing: %s", buf);
             }
             RegCloseKey(hKey);
         }
@@ -232,7 +232,7 @@ HRESULT PipeClient::SpawnEngine()
     DWORD attrs = GetFileAttributesW(EnginePath());
     if (attrs == INVALID_FILE_ATTRIBUTES || (attrs & FILE_ATTRIBUTE_DIRECTORY))
     {
-        MIEN_TRACE(L"SpawnEngine: engine script not found");
+        VISAGE_TRACE(L"SpawnEngine: engine script not found");
         return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
     }
 
@@ -240,7 +240,7 @@ HRESULT PipeClient::SpawnEngine()
     HRESULT hr = ResolvePythonExe(pythonExe);
     if (FAILED(hr))
     {
-        MIEN_TRACE(L"SpawnEngine: no Python interpreter found (hr=0x%08x)", hr);
+        VISAGE_TRACE(L"SpawnEngine: no Python interpreter found (hr=0x%08x)", hr);
         return hr;
     }
 
@@ -259,7 +259,7 @@ HRESULT PipeClient::SpawnEngine()
 
     PROCESS_INFORMATION pi{};
     // NOTE (security): this runs as SYSTEM on the secure desktop, so
-    // C:\ProgramData\Mien\engine\ must be ACL'd admin-writable-only by the
+    // C:\ProgramData\Visage\engine\ must be ACL'd admin-writable-only by the
     // installer. We execute exactly one fixed script path.
     if (!CreateProcessW(nullptr, cmdBuf.data(),
                         nullptr, nullptr, FALSE,
@@ -267,11 +267,11 @@ HRESULT PipeClient::SpawnEngine()
                         nullptr, nullptr, &si, &pi))
     {
         HRESULT chr = HRESULT_FROM_WIN32(GetLastError());
-        MIEN_TRACE(L"SpawnEngine: CreateProcess failed (hr=0x%08x)", chr);
+        VISAGE_TRACE(L"SpawnEngine: CreateProcess failed (hr=0x%08x)", chr);
         return chr;
     }
 
-    MIEN_TRACE(L"SpawnEngine: started pid=%u", pi.dwProcessId);
+    VISAGE_TRACE(L"SpawnEngine: started pid=%u", pi.dwProcessId);
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
     return S_OK;
@@ -331,7 +331,7 @@ HRESULT PipeClient::SendLine(const std::string& jsonUtf8)
     CloseHandle(ov.hEvent);
     if (FAILED(hr))
     {
-        MIEN_TRACE(L"SendLine: write failed (hr=0x%08x)", hr);
+        VISAGE_TRACE(L"SendLine: write failed (hr=0x%08x)", hr);
     }
     // NOTE: no FlushFileBuffers. On a byte-mode pipe it can block until the
     // server reads, which would hang the worker on a dead engine. WriteFile
@@ -473,4 +473,4 @@ HRESULT PipeClient::ReadLine(std::wstring& outLineUtf16, DWORD timeoutMs,
     return S_OK;
 }
 
-} // namespace mien
+} // namespace visage

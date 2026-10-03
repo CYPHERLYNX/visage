@@ -5,7 +5,7 @@
 #include <dpapi.h>
 #include <vector>
 
-namespace mien
+namespace visage
 {
 
 HRESULT ReadVaultCreds(VaultCreds& out)
@@ -21,7 +21,7 @@ HRESULT ReadVaultCreds(VaultCreds& out)
     if (hFile == INVALID_HANDLE_VALUE)
     {
         DWORD le = GetLastError();
-        MIEN_TRACE(L"ReadVaultCreds: cannot open vault (%u)", le);
+        VISAGE_TRACE(L"ReadVaultCreds: cannot open vault (%u)", le);
         return HRESULT_FROM_WIN32(le);
     }
 
@@ -57,7 +57,7 @@ HRESULT ReadVaultCreds(VaultCreds& out)
                             CRYPTPROTECT_LOCAL_MACHINE, &outBlob))
     {
         DWORD le = GetLastError();
-        MIEN_TRACE(L"ReadVaultCreds: CryptUnprotectData failed (%u)", le);
+        VISAGE_TRACE(L"ReadVaultCreds: CryptUnprotectData failed (%u)", le);
         return HRESULT_FROM_WIN32(le);
     }
 
@@ -94,7 +94,7 @@ HRESULT ReadVaultCreds(VaultCreds& out)
     std::map<std::wstring, std::wstring> obj;
     if (!JsonMini::ParseFlatObject(json, obj))
     {
-        MIEN_TRACE(L"ReadVaultCreds: vault JSON malformed");
+        VISAGE_TRACE(L"ReadVaultCreds: vault JSON malformed");
         return E_FAIL;
     }
     // Best effort: drop the wide JSON text now (it contains the password).
@@ -103,19 +103,19 @@ HRESULT ReadVaultCreds(VaultCreds& out)
     std::wstring version, username, domain, password;
     if (!JsonMini::GetString(obj, L"version", version) || version != L"1")
     {
-        MIEN_TRACE(L"ReadVaultCreds: unsupported/missing vault version");
+        VISAGE_TRACE(L"ReadVaultCreds: unsupported/missing vault version");
         return E_FAIL;
     }
     if (!JsonMini::GetString(obj, L"username", username) || username.empty())
     {
-        MIEN_TRACE(L"ReadVaultCreds: vault missing username");
+        VISAGE_TRACE(L"ReadVaultCreds: vault missing username");
         return E_FAIL;
     }
     // domain may legitimately be empty (local account / UPN).
     JsonMini::GetString(obj, L"domain", domain);
     if (!JsonMini::GetString(obj, L"password", password) || password.empty())
     {
-        MIEN_TRACE(L"ReadVaultCreds: vault missing password");
+        VISAGE_TRACE(L"ReadVaultCreds: vault missing password");
         return E_FAIL;
     }
 
@@ -132,4 +132,4 @@ HRESULT ReadVaultCreds(VaultCreds& out)
     return hr;
 }
 
-} // namespace mien
+} // namespace visage

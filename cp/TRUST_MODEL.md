@@ -1,15 +1,15 @@
-TRUST MODEL - Mien Credential Provider
+TRUST MODEL - Visage Credential Provider
 ========================================
 ASCII-only document.
 
-This file states exactly what the credential provider (MienCP.dll) trusts,
+This file states exactly what the credential provider (VisageCP.dll) trusts,
 what it verifies, and what happens when anything fails. The provider runs
 inside LogonUI.exe as SYSTEM on the secure desktop: every code path below
 was written against the question "if this throws, crashes, or hangs, what
 does the user see?" The answer is always the same: they can still sign in
 with their password or PIN.
 
-1. THE NAMED PIPE (\\.\pipe\MienAuth)
+1. THE NAMED PIPE (\\.\pipe\VisageAuth)
 -------------------------------------
 Role: the ONLY channel between the tile and the face engine.
 
@@ -22,7 +22,7 @@ Role: the ONLY channel between the tile and the face engine.
      engine worker's service side - verify this in its review.)
   b) Spawn-what-you-talk-to: if the pipe is absent, the provider launches
      the engine itself (a single fixed script path,
-     C:\ProgramData\Mien\engine\mien_engine.py, via a configured Python -
+     C:\ProgramData\Visage\engine\visage_engine.py, via a configured Python -
      never a user path) and then connects. The common case is therefore
      talking to a process it just started, not to a stranger holding the
      pipe name.
@@ -56,7 +56,7 @@ Role: the ONLY channel between the tile and the face engine.
   the state machine, trigger submission, or reach any log, file, or UI
   other than the tile's own status line.
 
-3. THE VAULT (C:\ProgramData\Mien\vault.dat)
+3. THE VAULT (C:\ProgramData\Visage\vault.dat)
 --------------------------------------------
 - Format: DPAPI CryptUnprotectData with CRYPTPROTECT_LOCAL_MACHINE over
   UTF-8 JSON {"version":1,"username":"...","domain":"...","password":"..."}.
@@ -118,7 +118,7 @@ Role: the ONLY channel between the tile and the face engine.
 - No camera access from the provider: all computer vision lives in the
   engine process.
 - No password/PIN tiles are enumerated, filtered, hidden, or reordered by
-  any code path (see the INVARIANT comment on CMienProvider).
+  any code path (see the INVARIANT comment on CVisageProvider).
 - No auto-logon: SetSelected always returns *pbAutoLogon = FALSE and
   GetCredentialCount returns pbAutoLogonWithDefault = FALSE. A face scan
   must succeed AND the user must press Enter before anything submits.

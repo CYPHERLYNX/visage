@@ -1,11 +1,11 @@
 """
-Download the ONNX models used by the Mien engine.
+Download the ONNX models used by the Visage engine.
 
 Models are NEVER bundled in the repo. Run this once per machine::
 
     python -m engine.fetch_models        # or: python engine/fetch_models.py
 
-Downloads to ``C:\\ProgramData\\Mien\\models\\`` on Windows, ``./models``
+Downloads to ``C:\\ProgramData\\Visage\\models\\`` on Windows, ``./models``
 (dev, next to this file) elsewhere. Each file is verified against a pinned
 SHA-256 hash, retried up to 3 times, and any failure is reported in plain
 language.
@@ -57,7 +57,7 @@ CHUNK = 1024 * 256
 
 def default_model_dir() -> str:
     if os.name == "nt":
-        return r"C:\ProgramData\Mien\models"
+        return r"C:\ProgramData\Visage\models"
     here = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(here, "models")
 
@@ -82,7 +82,7 @@ def _download(url: str, dest: str, label: str) -> None:
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             print("Downloading %s (attempt %d/%d) ..." % (label, attempt, MAX_RETRIES))
-            req = urllib.request.Request(url, headers={"User-Agent": "MienEngine/0.1"})
+            req = urllib.request.Request(url, headers={"User-Agent": "VisageEngine/0.1"})
             with urllib.request.urlopen(req, timeout=120) as resp, open(dest, "wb") as fh:
                 total = 0
                 while True:
@@ -146,7 +146,7 @@ def fetch_model(name: str, model_dir: str) -> str:
         os.remove(dest)
 
     os.makedirs(model_dir, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix="mien_models_") as tmp:
+    with tempfile.TemporaryDirectory(prefix="visage_models_") as tmp:
         tmp_file = os.path.join(tmp, name + ".download")
         _download(spec["url"], tmp_file, name)
         if spec["kind"] == "zip_member":

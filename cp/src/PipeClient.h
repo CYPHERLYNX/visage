@@ -1,5 +1,5 @@
 // PipeClient.h
-// JSONL client for the Mien engine named pipe (\\.\pipe\MienAuth).
+// JSONL client for the Visage engine named pipe (\\.\pipe\VisageAuth).
 //
 // Responsibilities:
 //   - Connect to the pipe, spawning the engine first if it is not running.
@@ -12,7 +12,7 @@
 #include <windows.h>
 #include <string>
 
-namespace mien
+namespace visage
 {
 
 class PipeClient
@@ -24,7 +24,7 @@ public:
     PipeClient(const PipeClient&) = delete;
     PipeClient& operator=(const PipeClient&) = delete;
 
-    // Connects to \\.\pipe\MienAuth. If the pipe does not exist, tries to
+    // Connects to \\.\pipe\VisageAuth. If the pipe does not exist, tries to
     // spawn the engine and waits for the pipe to appear. connectTimeoutMs
     // bounds the whole operation. cancelEvent (may be null) is polled while
     // waiting so a blocked connect can be aborted promptly.
@@ -47,9 +47,9 @@ public:
     void Close();
 
     // Pipe / install locations. No user-profile paths anywhere.
-    static const wchar_t* PipeName()  { return L"\\\\.\\pipe\\MienAuth"; }
-    static const wchar_t* EnginePath(){ return L"C:\\ProgramData\\Mien\\engine\\mien_engine.py"; }
-    static const wchar_t* RegKey()    { return L"SOFTWARE\\Mien"; }
+    static const wchar_t* PipeName()  { return L"\\\\.\\pipe\\VisageAuth"; }
+    static const wchar_t* EnginePath(){ return L"C:\\ProgramData\\Visage\\engine\\visage_engine.py"; }
+    static const wchar_t* RegKey()    { return L"SOFTWARE\\Visage"; }
     static const wchar_t* RegPython() { return L"PythonPath"; }
 
 private:
@@ -60,4 +60,4 @@ private:
     HANDLE m_pipe;
 };
 
-} // namespace mien
+} // namespace visage

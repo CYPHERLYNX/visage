@@ -1,4 +1,4 @@
-# Mien Engine — Trust Model
+# Visage Engine — Trust Model
 
 This document states, in one place, what the face-unlock engine is trusted
 with, what it is not, and how the code enforces the boundary. It is written
@@ -8,12 +8,12 @@ for the adversarial reviewer: every claim names the file that implements it.
 
 | Component | Process | Trusted with |
 |---|---|---|
-| **Engine** (`mien_engine.py`) | Windows service, runs as SYSTEM | Camera frames (in memory only), face embeddings, liveness verdicts |
+| **Engine** (`visage_engine.py`) | Windows service, runs as SYSTEM | Camera frames (in memory only), face embeddings, liveness verdicts |
 | **Credential provider (CP)** | Winlogon / LogonUI | The password vault (`vault.dat`), submitting credentials to Windows |
 | **Manager app** | User session | Enrollment UI, `enroll.py` / `identities.py` / `vault.py` |
 
 The engine and the CP communicate over the named pipe
-`\\.\pipe\MienAuth` using the JSONL protocol documented in
+`\\.\pipe\VisageAuth` using the JSONL protocol documented in
 `pipe_protocol.py`.
 
 ## 1. The pipe carries scan evidence only — there is no "unlock" command
@@ -34,7 +34,7 @@ The unlock decision (identity match AND liveness verdict) is computed inside
 the engine; the CP cannot influence it beyond starting/cancelling a scan.
 Even a fully compromised engine process cannot exfiltrate the Windows
 password, because the password never enters the engine's address space —
-`mien_engine.py` never imports the vault's credential functions.
+`visage_engine.py` never imports the vault's credential functions.
 
 `validate_cp_message()` enforces this with a whitelist: exact command set,
 exact field set per command, exact types, and value ranges
@@ -43,7 +43,7 @@ commands, unknown fields, wrong types, and out-of-range values are rejected.
 
 ## 2. Named-pipe access control
 
-`PIPE_SDDL = "D:P(A;;GA;;;SY)(A;;GA;;;BA)"` (`mien_engine.py`):
+`PIPE_SDDL = "D:P(A;;GA;;;SY)(A;;GA;;;BA)"` (`visage_engine.py`):
 
 * `D:P` — DACL, protected from inheriting parent ACEs.
 * `(A;;GA;;;SY)` — allow full access to SYSTEM.

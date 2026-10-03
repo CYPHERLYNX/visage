@@ -1,6 +1,6 @@
-# Mien Manager
+# Visage Manager
 
-The desktop companion app for **Mien** — face unlock for Windows 10/11.
+The desktop companion app for **Visage** — face unlock for Windows 10/11.
 Enroll faces, manage identities, tune recognition and liveness, store the
 Windows password securely, and control the lock-screen tile — all in one
 calm, dark, Apple-grade interface.
@@ -25,14 +25,14 @@ exercised with no hardware:
 ```bash
 pip install PyQt6 numpy          # opencv not needed for the simulated path
 QT_QPA_PLATFORM=offscreen python run.py        # headless smoke test
-MIEN_DEMO_CAMERA=1 python run.py                # synthetic camera preview
+VISAGE_DEMO_CAMERA=1 python run.py                # synthetic camera preview
 ```
 
 No network calls are made at runtime, ever.
 
 ## What it does
 
-- **First-run setup** — welcome, an honest security notice ("Mien is not
+- **First-run setup** — welcome, an honest security notice ("Visage is not
   as secure as Windows Hello..."), camera selection, guided enrollment,
   password storage. Mirrors Glance's onboarding arc.
 - **Guided enrollment** — nine head directions (front, up, down, left,
@@ -53,7 +53,7 @@ No network calls are made at runtime, ever.
 - **Lock-screen tile** — register/unregister the Credential Provider
   tile via `../cp/register.ps1` / `unregister.ps1`, with status readout.
 - **Face Lab** — hidden diagnostics console. On the About page, click
-  the Mien logo **5 times in a row** (a pause resets the count). Shows
+  the Visage logo **5 times in a row** (a pause resets the count). Shows
   embedder status, vault/store state, live camera preview, detection
   stats, manual sample capture, per-sample identity disclosure,
   Identify with threshold slider, threshold calibration with strip
@@ -68,7 +68,7 @@ manager/
   requirements.txt
   README.md               this file
   ENGINE_INTERFACE.md     the engine contract (what the engine worker owns)
-  mien_manager/
+  visage_manager/
     app.py                main window + sidebar
     theme.py              the dark design language
     widgets.py            cards, toggles, segmented control, checkmark…
@@ -94,7 +94,7 @@ back to a clearly-labelled simulated engine otherwise. See
 | "No camera support is installed" | `pip install -r requirements.txt`, then restart. |
 | Enrollment stalls on a direction | Turn a little further, or ease back — extreme angles are rejected. If a pose never completes, relight the room and try again. |
 | Face Lab is missing from the sidebar | Click the logo on the About page 5 times quickly. |
-| Lock-screen tile won't register | Registration writes to HKLM — run Mien Manager as administrator. |
+| Lock-screen tile won't register | Registration writes to HKLM — run Visage Manager as administrator. |
 
 ## Security notes
 

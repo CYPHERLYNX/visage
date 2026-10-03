@@ -37,10 +37,10 @@ from PyQt6.QtWidgets import (
 from .. import theme
 from ..camera import Camera
 from ..engine_bridge import CUE_DEFINITIONS, EngineBridge
-from ..errors import EngineUnavailableError, MienError, humanize, log_exception
+from ..errors import EngineUnavailableError, VisageError, humanize, log_exception
 from ..widgets import Card, CueBar
 
-log = logging.getLogger("mien")
+log = logging.getLogger("visage")
 
 LOG_CAP = 200
 
@@ -111,7 +111,7 @@ class _LabWorker(QObject):
             return {"error": "No frame yet — wait for the preview."}
         try:
             return self._bridge.identify_live(self._latest, threshold)
-        except MienError as exc:
+        except VisageError as exc:
             return {"error": exc.full_text().split("\n\n")[0]}
         except Exception as exc:
             log_exception(exc, "identify")
@@ -123,7 +123,7 @@ class _LabWorker(QObject):
         try:
             self._bridge.add_live_sample(name, self._latest)
             return f'Captured sample for "{name}".'
-        except MienError as exc:
+        except VisageError as exc:
             return f"Couldn't save sample: {exc.full_text().split(chr(10)+chr(10))[0]}"
         except Exception as exc:
             log_exception(exc, "manual capture")

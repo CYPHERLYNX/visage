@@ -32,7 +32,7 @@ class FirstRunWizard(QDialog):
         self.settings = settings
         self._enrolled_name = ""
 
-        self.setWindowTitle("Welcome to Mien")
+        self.setWindowTitle("Welcome to Visage")
         self.setModal(True)
         self.resize(620, 520)
         self.setStyleSheet(theme.STYLESHEET)
@@ -84,7 +84,7 @@ class FirstRunWizard(QDialog):
     def _welcome_page(self) -> QWidget:
         page, lay = self._page_shell(
             "Unlock your PC with a glance.",
-            "Mien learns your face, then signs you in at the Windows lock screen — "
+            "Visage learns your face, then signs you in at the Windows lock screen — "
             "no typing, no reaching for a key. Everything runs on this device: "
             "your face data and your password never touch the internet.",
         )
@@ -95,12 +95,12 @@ class FirstRunWizard(QDialog):
     def _security_page(self) -> QWidget:
         page, lay = self._page_shell(
             "A quick, honest note on security.",
-            "Mien is not as secure as Windows Hello or a fingerprint reader. It uses "
+            "Visage is not as secure as Windows Hello or a fingerprint reader. It uses "
             "your PC's standard webcam — a flat 2D image, not a depth map.\n\n"
-            "With liveness detection on, Mien defeats a printed photo and a photo on a "
+            "With liveness detection on, Visage defeats a printed photo and a photo on a "
             "phone screen with reasonable confidence. It does not reliably defeat a "
             "video of you.\n\n"
-            "Mien is a convenience feature, not a security upgrade. "
+            "Visage is a convenience feature, not a security upgrade. "
             "Only continue if you accept the tradeoff.",
         )
         return page
@@ -149,8 +149,8 @@ class FirstRunWizard(QDialog):
 
     def _enroll_prompt_page(self) -> QWidget:
         page, lay = self._page_shell(
-            "First, teach Mien your face.",
-            "You'll turn your head in nine directions while Mien captures what it needs. "
+            "First, teach Visage your face.",
+            "You'll turn your head in nine directions while Visage captures what it needs. "
             "It takes about a minute. Sit in even light and face the screen.",
         )
         btn = QPushButton("Start enrollment")
@@ -166,7 +166,7 @@ class FirstRunWizard(QDialog):
         page, lay = self._page_shell(
             "Enter your password",
             "Your password is required to unlock your PC. It is encrypted and securely "
-            "stored on your device. Mien works entirely offline, so your password never "
+            "stored on your device. Visage works entirely offline, so your password never "
             "leaves your PC.",
         )
         btn = QPushButton("Set password")
@@ -181,7 +181,7 @@ class FirstRunWizard(QDialog):
     def _done_page(self) -> QWidget:
         page, lay = self._page_shell(
             "You're all set.",
-            "Mien will offer a face scan on the Windows lock screen. "
+            "Visage will offer a face scan on the Windows lock screen. "
             "You can enroll more faces, tune liveness, or open Face Lab from the sidebar any time.",
         )
         return page

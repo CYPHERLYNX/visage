@@ -14,7 +14,7 @@
 #include <credentialprovider.h>
 #include "Common.h"
 
-namespace mien
+namespace visage
 {
 
 // Splits a stored username into domain + user for the KERB logon.
@@ -45,4 +45,4 @@ HRESULT BuildKerbUnlockSerialization(const wchar_t* domain,
 bool TryGetStashedLogonId(
     const CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs, LUID* out);
 
-} // namespace mien
+} // namespace visage

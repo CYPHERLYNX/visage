@@ -1,9 +1,9 @@
 """
-Mien face-unlock engine.
+Visage face-unlock engine.
 
 A Python face-recognition + anti-spoofing engine that serves authentication
 requests from a Windows credential-provider companion process. On Windows it
-listens on the named pipe ``\\\\.\\pipe\\MienAuth``; on other platforms (dev /
+listens on the named pipe ``\\\\.\\pipe\\VisageAuth``; on other platforms (dev /
 testing) it falls back to a TCP localhost socket, and ``--test`` mode runs the
 pipeline directly on image files without any IPC.
 
@@ -22,7 +22,7 @@ identities     Encrypted enrollment store: multiple 512-d embeddings per
                identity. Images are NEVER written to disk.
 enroll         Guided multi-direction enrollment with per-frame quality gates.
 fetch_models   Downloads the ONNX models (never bundled in the repo).
-mien_engine    Entry point: pipe/TCP listener, auth state machine, --test mode.
+visage_engine    Entry point: pipe/TCP listener, auth state machine, --test mode.
 
 No network calls happen at runtime. The only module that touches the network
 is ``fetch_models``.
@@ -37,5 +37,5 @@ __all__ = [
     "identities",
     "enroll",
     "fetch_models",
-    "mien_engine",
+    "visage_engine",
 ]

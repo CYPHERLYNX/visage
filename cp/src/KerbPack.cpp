@@ -14,7 +14,7 @@
 #endif
 #endif
 
-namespace mien
+namespace visage
 {
 
 bool SplitUserName(const wchar_t* stored, const wchar_t* fallbackDomain,
@@ -137,7 +137,7 @@ HRESULT BuildKerbUnlockSerialization(const wchar_t* domain,
     // Defensive: cursor must land exactly at the end of the allocation.
     if (cursor != buf + cbTotal)
     {
-        MIEN_TRACE(L"BuildKerbUnlockSerialization: size mismatch");
+        VISAGE_TRACE(L"BuildKerbUnlockSerialization: size mismatch");
         SecureZeroMemory(buf, cbTotal);
         CoTaskMemFree(buf);
         return E_FAIL;
@@ -172,4 +172,4 @@ bool TryGetStashedLogonId(
     return true;
 }
 
-} // namespace mien
+} // namespace visage

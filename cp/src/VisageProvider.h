@@ -1,5 +1,5 @@
-// MienProvider.h
-// CMienProvider: ICredentialProvider implementation for Mien face unlock.
+// VisageProvider.h
+// CVisageProvider: ICredentialProvider implementation for Visage face unlock.
 //
 // INVARIANT (A1): this provider ADDS exactly one tile - its own "Face Unlock"
 // tile. It never enumerates, filters, hides, disables, or otherwise alters
@@ -23,14 +23,14 @@
 #include <windows.h>
 #include <credentialprovider.h>
 
-namespace mien
+namespace visage
 {
 
-class CMienProvider : public ICredentialProvider
+class CVisageProvider : public ICredentialProvider
 {
 public:
-    CMienProvider();
-    ~CMienProvider();
+    CVisageProvider();
+    ~CVisageProvider();
 
     // IUnknown
     STDMETHODIMP QueryInterface(REFIID riid, void** ppv) override;
@@ -55,8 +55,8 @@ public:
                                  ICredentialProviderCredential** ppcpc) override;
 
 private:
-    CMienProvider(const CMienProvider&) = delete;
-    CMienProvider& operator=(const CMienProvider&) = delete;
+    CVisageProvider(const CVisageProvider&) = delete;
+    CVisageProvider& operator=(const CVisageProvider&) = delete;
 
     LONG    m_cRef;
     CREDENTIAL_PROVIDER_USAGE_SCENARIO m_cpus;
@@ -71,4 +71,4 @@ private:
     UINT_PTR m_upAdviseContext;
 };
 
-} // namespace mien
+} // namespace visage

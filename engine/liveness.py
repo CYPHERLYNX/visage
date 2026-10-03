@@ -621,7 +621,7 @@ class LivenessSession:
     failure in Light mode.
 
     Extension beyond Glance: "needs_challenge". Glance's heavy mode stays
-    pending until its scan timeout; Mien instead escalates a borderline scan
+    pending until its scan timeout; Visage instead escalates a borderline scan
     to a challenge-response round, which is what defeats replayed video.
     """
 

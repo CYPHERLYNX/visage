@@ -1,7 +1,7 @@
-# unregister.ps1 - Removes the Mien Face Unlock credential provider.
-# Run from an ELEVATED PowerShell, in the folder containing MienCP.dll:
+# unregister.ps1 - Removes the Visage Face Unlock credential provider.
+# Run from an ELEVATED PowerShell, in the folder containing VisageCP.dll:
 #   .\unregister.ps1
-# Only Mien's own two registry keys are removed; built-in providers are untouched.
+# Only Visage's own two registry keys are removed; built-in providers are untouched.
 # ASCII-only.
 
 $ErrorActionPreference = "Stop"
@@ -18,7 +18,7 @@ if (-not (Test-IsAdmin)) {
     exit 1
 }
 
-$dll = Join-Path $PSScriptRoot "MienCP.dll"
+$dll = Join-Path $PSScriptRoot "VisageCP.dll"
 # Same Sysnative guard as register.ps1: from 32-bit PowerShell on 64-bit
 # Windows, System32 redirects to SysWOW64, and the HKLM:\ checks below would
 # look in the 32-bit registry view. Sysnative keeps us in the 64-bit view
@@ -29,13 +29,13 @@ if ((-not [Environment]::Is64BitProcess) -and [Environment]::Is64BitOperatingSys
 }
 
 if ((Test-Path $dll) -and (Test-Path $regsvr32)) {
-    Write-Host "Unregistering MienCP.dll ..."
+    Write-Host "Unregistering VisageCP.dll ..."
     & $regsvr32 /u /s $dll
     if ($LASTEXITCODE -ne 0) {
         Write-Host "WARNING: regsvr32 /u exited with code $LASTEXITCODE; continuing with manual key removal." -ForegroundColor Yellow
     }
 } else {
-    Write-Host "MienCP.dll or regsvr32.exe not found; removing registry keys directly."
+    Write-Host "VisageCP.dll or regsvr32.exe not found; removing registry keys directly."
 }
 
 $clsid = "{794AAC04-6CB6-4C77-A828-27C20D0F820D}"
@@ -53,5 +53,5 @@ foreach ($k in $keys) {
 }
 
 Write-Host ""
-Write-Host "Mien Face Unlock is unregistered." -ForegroundColor Green
+Write-Host "Visage Face Unlock is unregistered." -ForegroundColor Green
 Write-Host "Lock the PC (Win+L) to confirm the tile is gone."

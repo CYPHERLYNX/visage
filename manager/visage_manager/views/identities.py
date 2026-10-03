@@ -155,7 +155,7 @@ class IdentitiesPage(QWidget):
             msg = QLabel("No faces enrolled yet.")
             msg.setStyleSheet(f"font-size: 15px; font-weight: 600;")
             el.addWidget(msg)
-            hint = QLabel("Enroll your face to let Mien recognize you at the lock screen.")
+            hint = QLabel("Enroll your face to let Visage recognize you at the lock screen.")
             hint.setObjectName("caption")
             hint.setWordWrap(True)
             el.addWidget(hint)

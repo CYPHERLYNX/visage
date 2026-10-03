@@ -1,9 +1,9 @@
 """
-JSONL wire protocol between the credential provider (CP) and the Mien engine.
+JSONL wire protocol between the credential provider (CP) and the Visage engine.
 
 Transport
 ---------
-Windows: named pipe ``\\\\.\\pipe\\MienAuth`` (message mode, one JSON object
+Windows: named pipe ``\\\\.\\pipe\\VisageAuth`` (message mode, one JSON object
 per line, UTF-8). Dev/testing: TCP localhost socket, same framing.
 
 Every message is a single JSON object terminated by ``\\n``. Either side may

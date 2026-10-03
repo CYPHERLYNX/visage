@@ -1,6 +1,6 @@
-// MienProvider.cpp
-#include "MienProvider.h"
-#include "MienCredential.h"
+// VisageProvider.cpp
+#include "VisageProvider.h"
+#include "VisageCredential.h"
 #include "KerbPack.h"
 #include "Common.h"
 
@@ -8,7 +8,7 @@
 
 extern long g_cRef;
 
-namespace mien
+namespace visage
 {
 
 namespace
@@ -57,7 +57,7 @@ HRESULT RetrieveKerberosAuthPackage(ULONG* pulAuthPackage)
 }
 } // namespace
 
-CMienProvider::CMienProvider()
+CVisageProvider::CVisageProvider()
     : m_cRef(1)
     , m_cpus(CPUS_INVALID)
     , m_dwFlags(0)
@@ -72,7 +72,7 @@ CMienProvider::CMienProvider()
     m_logonId.HighPart = 0;
 }
 
-CMienProvider::~CMienProvider()
+CVisageProvider::~CVisageProvider()
 {
     if (m_pEvents != nullptr)
     {
@@ -82,7 +82,7 @@ CMienProvider::~CMienProvider()
     InterlockedDecrement(&g_cRef);
 }
 
-STDMETHODIMP CMienProvider::QueryInterface(REFIID riid, void** ppv)
+STDMETHODIMP CVisageProvider::QueryInterface(REFIID riid, void** ppv)
 {
     if (ppv == nullptr)
     {
@@ -101,12 +101,12 @@ STDMETHODIMP CMienProvider::QueryInterface(REFIID riid, void** ppv)
     return S_OK;
 }
 
-STDMETHODIMP_(ULONG) CMienProvider::AddRef()
+STDMETHODIMP_(ULONG) CVisageProvider::AddRef()
 {
     return static_cast<ULONG>(InterlockedIncrement(&m_cRef));
 }
 
-STDMETHODIMP_(ULONG) CMienProvider::Release()
+STDMETHODIMP_(ULONG) CVisageProvider::Release()
 {
     LONG c = InterlockedDecrement(&m_cRef);
     if (c == 0)
@@ -116,7 +116,7 @@ STDMETHODIMP_(ULONG) CMienProvider::Release()
     return static_cast<ULONG>(c);
 }
 
-STDMETHODIMP CMienProvider::SetUsageScenario(
+STDMETHODIMP CVisageProvider::SetUsageScenario(
     CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus, DWORD dwFlags)
 {
     // We exist only on the sign-in screen and the lock screen. Anywhere
@@ -124,7 +124,7 @@ STDMETHODIMP CMienProvider::SetUsageScenario(
     // can never interfere with those flows.
     if (cpus != CPUS_LOGON && cpus != CPUS_UNLOCK_WORKSTATION)
     {
-        MIEN_TRACE(L"SetUsageScenario: unsupported cpus=%d, not loading", cpus);
+        VISAGE_TRACE(L"SetUsageScenario: unsupported cpus=%d, not loading", cpus);
         return E_NOTIMPL;
     }
 
@@ -133,7 +133,7 @@ STDMETHODIMP CMienProvider::SetUsageScenario(
     {
         // A provider that cannot stamp its serialization is worse than no
         // provider: fail here so no tile is enumerated.
-        MIEN_TRACE(L"SetUsageScenario: auth package lookup failed (hr=0x%08x)", hr);
+        VISAGE_TRACE(L"SetUsageScenario: auth package lookup failed (hr=0x%08x)", hr);
         m_usageSet = false;
         return hr;
     }
@@ -144,7 +144,7 @@ STDMETHODIMP CMienProvider::SetUsageScenario(
     return S_OK;
 }
 
-STDMETHODIMP CMienProvider::SetSerialization(
+STDMETHODIMP CVisageProvider::SetSerialization(
     const CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs)
 {
     // On CPUS_UNLOCK_WORKSTATION, LogonUI hands us the locked session's
@@ -164,13 +164,13 @@ STDMETHODIMP CMienProvider::SetSerialization(
         }
         else
         {
-            MIEN_TRACE(L"SetSerialization: no usable LogonId in incoming blob");
+            VISAGE_TRACE(L"SetSerialization: no usable LogonId in incoming blob");
         }
     }
     return S_OK;
 }
 
-STDMETHODIMP CMienProvider::Advise(ICredentialProviderEvents* pcpe,
+STDMETHODIMP CVisageProvider::Advise(ICredentialProviderEvents* pcpe,
                                    UINT_PTR upAdviseContext)
 {
     if (pcpe == nullptr)
@@ -187,7 +187,7 @@ STDMETHODIMP CMienProvider::Advise(ICredentialProviderEvents* pcpe,
     return S_OK;
 }
 
-STDMETHODIMP CMienProvider::UnAdvise()
+STDMETHODIMP CVisageProvider::UnAdvise()
 {
     if (m_pEvents != nullptr)
     {
@@ -198,7 +198,7 @@ STDMETHODIMP CMienProvider::UnAdvise()
     return S_OK;
 }
 
-STDMETHODIMP CMienProvider::GetFieldDescriptorCount(DWORD* pdwCount)
+STDMETHODIMP CVisageProvider::GetFieldDescriptorCount(DWORD* pdwCount)
 {
     if (pdwCount == nullptr)
     {
@@ -208,7 +208,7 @@ STDMETHODIMP CMienProvider::GetFieldDescriptorCount(DWORD* pdwCount)
     return S_OK;
 }
 
-STDMETHODIMP CMienProvider::GetFieldDescriptorAt(
+STDMETHODIMP CVisageProvider::GetFieldDescriptorAt(
     DWORD dwIndex,
     CREDENTIAL_PROVIDER_FIELD_DESCRIPTOR** ppcpfd)
 {
@@ -242,7 +242,7 @@ STDMETHODIMP CMienProvider::GetFieldDescriptorAt(
     return S_OK;
 }
 
-STDMETHODIMP CMienProvider::GetCredentialCount(DWORD* pdwCount,
+STDMETHODIMP CVisageProvider::GetCredentialCount(DWORD* pdwCount,
                                                DWORD* pdwDefault,
                                                BOOL* pbAutoLogonWithDefault)
 {
@@ -264,7 +264,7 @@ STDMETHODIMP CMienProvider::GetCredentialCount(DWORD* pdwCount,
     return S_OK;
 }
 
-STDMETHODIMP CMienProvider::GetCredentialAt(
+STDMETHODIMP CVisageProvider::GetCredentialAt(
     DWORD dwIndex, ICredentialProviderCredential** ppcpc)
 {
     if (ppcpc == nullptr)
@@ -277,7 +277,7 @@ STDMETHODIMP CMienProvider::GetCredentialAt(
         return E_INVALIDARG;
     }
 
-    auto* pCred = new (std::nothrow) CMienCredential(
+    auto* pCred = new (std::nothrow) CVisageCredential(
         m_cpus, m_ulAuthPackage, m_haveLogonId, m_logonId);
     if (pCred == nullptr)
     {
@@ -287,4 +287,4 @@ STDMETHODIMP CMienProvider::GetCredentialAt(
     return S_OK;
 }
 
-} // namespace mien
+} // namespace visage

@@ -1,4 +1,4 @@
-TEST PLAN - Mien Credential Provider
+TEST PLAN - Visage Credential Provider
 =====================================
 ASCII-only document.
 
@@ -6,7 +6,7 @@ GOLDEN RULES
 ------------
 1. VM FIRST. Never register this DLL on a physical machine until the full
    matrix below passes on a VM.
-2. SNAPSHOT before registering. Name it "pre-mien-cp".
+2. SNAPSHOT before registering. Name it "pre-visage-cp".
 3. SPARE ADMIN ACCOUNT. Create a second local administrator account with a
    KNOWN password before you begin, and verify you can sign into it.
    If the tile ever misbehaves, you sign in as the spare admin and run
@@ -20,7 +20,7 @@ RECOVERY (if anything goes wrong)
 In order of preference:
 
 A. Normal sign-in (expected path - always works):
-   Sign in with your password or PIN tile (untouched by Mien), open an
+   Sign in with your password or PIN tile (untouched by Visage), open an
    elevated PowerShell in the folder with unregister.ps1, run it, lock
    (Win+L) and confirm the tile is gone.
 
@@ -30,7 +30,7 @@ B. Safe Mode:
    2. Sign in as the spare admin. (Third-party credential providers do not
       load in Safe Mode, so you get the plain password tile.)
    3. Elevated PowerShell: cd to the DLL folder, run
-        regsvr32 /u MienCP.dll
+        regsvr32 /u VisageCP.dll
       then delete the provider key if it remains:
         Remove-Item -Recurse -Force `
           "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{794AAC04-6CB6-4C77-A828-27C20D0F820D}"
@@ -50,8 +50,8 @@ C. WinRE offline registry (if Safe Mode is unavailable):
 TEST SETUP
 ----------
 On the VM (as admin):
-1. Build Release|x64 (see BUILD.md), copy MienCP.dll + register.ps1 +
-   unregister.ps1 to C:\ProgramData\Mien\cp\.
+1. Build Release|x64 (see BUILD.md), copy VisageCP.dll + register.ps1 +
+   unregister.ps1 to C:\ProgramData\Visage\cp\.
 2. Install pywin32 in a Python (for the fake engine): pip install pywin32.
 3. Create a TEST vault (test password only, never a real one):
      cd <cp>\test

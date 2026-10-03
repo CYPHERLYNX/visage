@@ -19,12 +19,12 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName",      "Mien"
-            VALUE "FileDescription",  "Mien Face Unlock Credential Provider"
+            VALUE "CompanyName",      "Visage"
+            VALUE "FileDescription",  "Visage Face Unlock Credential Provider"
             VALUE "FileVersion",      "1.0.0.0"
-            VALUE "InternalName",     "MienCP"
-            VALUE "OriginalFilename", "MienCP.dll"
-            VALUE "ProductName",      "Mien"
+            VALUE "InternalName",     "VisageCP"
+            VALUE "OriginalFilename", "VisageCP.dll"
+            VALUE "ProductName",      "Visage"
             VALUE "ProductVersion",   "1.0.0.0"
         END
     END

@@ -1,18 +1,18 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Mien Uninstall - cleanly removes face unlock from Windows.
+    Visage Uninstall - cleanly removes face unlock from Windows.
 
 .DESCRIPTION
-    1. Unregisters the Mien Credential Provider sign-in tile
+    1. Unregisters the Visage Credential Provider sign-in tile
        (via ..\cp\unregister.ps1 when present).
-    2. Stops any running Mien processes.
-    3. Asks for confirmation, then deletes C:\ProgramData\Mien
+    2. Stops any running Visage processes.
+    3. Asks for confirmation, then deletes C:\ProgramData\Visage
        (enrolled faces, settings, models) and verifies it is gone.
-    4. Optionally removes the Python packages Mien installed.
+    4. Optionally removes the Python packages Visage installed.
 
     Must run as Administrator. If it is not, it asks to relaunch elevated.
-    Leaves the Mien program folder itself (this repo / the release zip
+    Leaves the Visage program folder itself (this repo / the release zip
     contents) in place - delete that yourself if you want it gone too.
 
     Exit codes: 0 = uninstalled (or nothing to do), 1 = a step failed.
@@ -24,7 +24,7 @@ $script:EngineDir    = Join-Path $script:ProjectRoot "engine"
 $script:CpDir        = Join-Path $script:ProjectRoot "cp"
 $script:ReqFile      = Join-Path $script:EngineDir "requirements.txt"
 $script:UnregisterCp = Join-Path $script:CpDir "unregister.ps1"
-$script:DataDir      = "C:\ProgramData\Mien"
+$script:DataDir      = "C:\ProgramData\Visage"
 
 function Test-IsAdmin {
     $id = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -52,7 +52,7 @@ function Find-Python {
 
 if (-not (Test-IsAdmin)) {
     Write-Host ""
-    Write-Host "Mien Uninstall needs to run as Administrator."
+    Write-Host "Visage Uninstall needs to run as Administrator."
     Write-Host "Requesting elevation now - approve the UAC prompt to continue."
     $argList = '-NoProfile -ExecutionPolicy Bypass -File "' + $PSCommandPath + '"'
     Start-Process powershell.exe -ArgumentList $argList -Verb RunAs
@@ -61,7 +61,7 @@ if (-not (Test-IsAdmin)) {
 
 Write-Host ""
 Write-Host "================================================================"
-Write-Host "  Mien Uninstall"
+Write-Host "  Visage Uninstall"
 Write-Host "================================================================"
 
 $failed = $false
@@ -69,7 +69,7 @@ $failed = $false
 # ------------------------------------------------- 1. unregister the CP tile
 
 Write-Host ""
-Write-Host "[1/4] Unregistering the Mien sign-in tile"
+Write-Host "[1/4] Unregistering the Visage sign-in tile"
 Write-Host ("-" * 64)
 if (Test-Path $script:UnregisterCp) {
     Write-Host "Running: cp\unregister.ps1"
@@ -95,35 +95,35 @@ if (Test-Path $script:UnregisterCp) {
 # ------------------------------------------------- 2. stop running processes
 
 Write-Host ""
-Write-Host "[2/4] Stopping running Mien processes"
+Write-Host "[2/4] Stopping running Visage processes"
 Write-Host ("-" * 64)
-$procs = Get-Process -Name "Mien*" -ErrorAction SilentlyContinue
+$procs = Get-Process -Name "Visage*" -ErrorAction SilentlyContinue
 if ($procs) {
     $names = ($procs | Select-Object -ExpandProperty ProcessName -Unique) -join ", "
     $procs | Stop-Process -Force -ErrorAction SilentlyContinue
     Start-Sleep -Milliseconds 500
-    $still = Get-Process -Name "Mien*" -ErrorAction SilentlyContinue
+    $still = Get-Process -Name "Visage*" -ErrorAction SilentlyContinue
     if ($still) {
         Write-Host "[FAILED] Could not stop: $names"
-        Write-Host "       Close Mien Manager yourself, then re-run this uninstaller."
+        Write-Host "       Close Visage Manager yourself, then re-run this uninstaller."
         $failed = $true
     } else {
         Write-Host "[ OK ] Stopped: $names"
     }
 } else {
-    Write-Host "[ OK ] No Mien processes running."
+    Write-Host "[ OK ] No Visage processes running."
 }
 
 # ------------------------------------------------- 3. delete the data folder
 
 Write-Host ""
-Write-Host "[3/4] Deleting Mien data"
+Write-Host "[3/4] Deleting Visage data"
 Write-Host ("-" * 64)
 if (-not (Test-Path $script:DataDir)) {
-    Write-Host "[ OK ] C:\ProgramData\Mien does not exist - nothing to delete."
+    Write-Host "[ OK ] C:\ProgramData\Visage does not exist - nothing to delete."
 } else {
     Write-Host "This permanently deletes:"
-    Write-Host "  C:\ProgramData\Mien\"
+    Write-Host "  C:\ProgramData\Visage\"
     Write-Host "    - all enrolled faces (identities\)"
     Write-Host "    - settings (config.json)"
     Write-Host "    - downloaded face models (models\)"
@@ -139,9 +139,9 @@ if (-not (Test-Path $script:DataDir)) {
         if (Test-Path $script:DataDir) {
             throw "folder still exists after deletion"
         }
-        Write-Host "[ OK ] C:\ProgramData\Mien deleted."
+        Write-Host "[ OK ] C:\ProgramData\Visage deleted."
     } catch {
-        Write-Host "[FAILED] Could not delete C:\ProgramData\Mien."
+        Write-Host "[FAILED] Could not delete C:\ProgramData\Visage."
         Write-Host "       Reason: $($_.Exception.Message)"
         Write-Host "       Close any program using those files and re-run this uninstaller"
         Write-Host "       as Administrator. Last resort: delete the folder by hand."
@@ -154,11 +154,11 @@ if (-not (Test-Path $script:DataDir)) {
 Write-Host ""
 Write-Host "[4/4] Python packages (optional)"
 Write-Host ("-" * 64)
-$rm = Read-Host "Also remove the Python packages Mien installed? (y/N)"
+$rm = Read-Host "Also remove the Python packages Visage installed? (y/N)"
 if ($rm -match '^[Yy]') {
     if (-not (Test-Path $script:ReqFile)) {
         Write-Host "[SKIP] engine\requirements.txt not found - cannot tell which"
-        Write-Host "       packages Mien installed, so nothing was removed."
+        Write-Host "       packages Visage installed, so nothing was removed."
     } else {
         $pyCmd = Find-Python
         if (-not $pyCmd) {
@@ -170,7 +170,7 @@ if ($rm -match '^[Yy]') {
             & $pyCmd[0] @pyPre @("-m", "pip", "uninstall", "-y", "-r", $script:ReqFile)
             $code = $LASTEXITCODE
             if ($code -eq 0) {
-                Write-Host "[ OK ] Mien's Python packages removed."
+                Write-Host "[ OK ] Visage's Python packages removed."
             } else {
                 Write-Host "[FAILED] pip uninstall exited with code $code."
                 Write-Host "       You can remove leftovers by hand with:"
@@ -188,22 +188,22 @@ if ($rm -match '^[Yy]') {
 Write-Host ""
 Write-Host "================================================================"
 if ($failed) {
-    Write-Host "  Mien Uninstall finished WITH FAILURES - see above"
+    Write-Host "  Visage Uninstall finished WITH FAILURES - see above"
     Write-Host "================================================================"
     Write-Host ""
     Write-Host "What may be left behind:"
-    Write-Host "  - the Mien sign-in tile (reboot, then re-run this uninstaller)"
-    Write-Host "  - C:\ProgramData\Mien (delete by hand as Administrator)"
+    Write-Host "  - the Visage sign-in tile (reboot, then re-run this uninstaller)"
+    Write-Host "  - C:\ProgramData\Visage (delete by hand as Administrator)"
     Write-Host "  - Python packages (python -m pip uninstall -y -r engine\requirements.txt)"
     Write-Host ""
     exit 1
 } else {
-    Write-Host "  Mien Uninstall complete"
+    Write-Host "  Visage Uninstall complete"
     Write-Host "================================================================"
     Write-Host ""
-    Write-Host "Removed: sign-in tile registration, C:\ProgramData\Mien,"
+    Write-Host "Removed: sign-in tile registration, C:\ProgramData\Visage,"
     Write-Host "and (if you chose it) the Python packages."
-    Write-Host "The Mien program folder itself was left in place - delete it"
+    Write-Host "The Visage program folder itself was left in place - delete it"
     Write-Host "yourself if you no longer want it."
     Write-Host ""
     exit 0

@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
 
 from .. import theme
 from ..engine_bridge import EngineBridge
-from ..errors import MienError, humanize, log_exception
+from ..errors import VisageError, humanize, log_exception
 from ..widgets import Card, Toast
 
 
@@ -33,7 +33,7 @@ class PasswordPage(QWidget):
         layout.addWidget(title)
         sub = QLabel(
             "Your password is required to unlock your PC. It is encrypted and securely "
-            "stored on your device. Mien works entirely offline, so your password never "
+            "stored on your device. Visage works entirely offline, so your password never "
             "leaves your PC."
         )
         sub.setObjectName("pageSubtitle")
@@ -141,7 +141,7 @@ class PasswordPage(QWidget):
             # into the vault and never assigned to an attribute or logged.
             self.bridge.store_credentials(username, password, domain)
             saved = True
-        except MienError as exc:
+        except VisageError as exc:
             self._error.setText(exc.full_text())
         except Exception as exc:
             log_exception(exc, "store credentials")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mien engine self-test.
+"""Visage engine self-test.
 
 Run by installer/setup.ps1 step 7 as ``python engine\\selftest.py``.
 Exit 0 = every check passed; exit 1 = something failed (the failure is
@@ -24,7 +24,7 @@ from engine import pipe_protocol as proto  # noqa: E402
 from engine import vault  # noqa: E402
 
 try:
-    from engine.mien_engine import load_machine_config  # noqa: E402
+    from engine.visage_engine import load_machine_config  # noqa: E402
 except Exception as exc:  # missing cv2/numpy: setup step 3 did not finish
     print("FAIL: could not import the engine (%s)." % exc)
     print("Run setup.ps1 again so the Python dependencies install, then re-run.")
@@ -180,7 +180,7 @@ def test_vault_envelope():
 
 
 def main():
-    print("Mien engine self-test")
+    print("Visage engine self-test")
     print("---------------------")
     try:
         test_protocol()

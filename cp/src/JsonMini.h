@@ -1,6 +1,6 @@
 // JsonMini.h
 // A tiny, dependency-free JSON reader for the flat string-valued objects used
-// by the Mien pipe protocol and vault file. It is intentionally NOT a general
+// by the Visage pipe protocol and vault file. It is intentionally NOT a general
 // JSON parser: it extracts top-level "key":"string value" pairs and ignores
 // everything else. Malformed input yields an empty map, never a crash.
 #pragma once
@@ -8,7 +8,7 @@
 #include <map>
 #include <string>
 
-namespace mien
+namespace visage
 {
 
 class JsonMini
@@ -277,4 +277,4 @@ private:
     }
 };
 
-} // namespace mien
+} // namespace visage

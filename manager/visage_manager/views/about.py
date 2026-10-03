@@ -41,7 +41,7 @@ class AboutPage(QWidget):
         self._logo.setCursor(Qt.CursorShape.PointingHandCursor)
         lay.addWidget(self._logo, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        name = QLabel("Mien")
+        name = QLabel("Visage")
         name.setStyleSheet(f"font-size: 24px; font-weight: 600; color: {theme.TEXT};")
         name.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lay.addWidget(name)

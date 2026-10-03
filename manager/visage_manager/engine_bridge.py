@@ -1,7 +1,7 @@
-"""Boundary between Mien Manager (UI) and the Mien engine.
+"""Boundary between Visage Manager (UI) and the Visage engine.
 
 The engine worker owns ``../engine/`` (a real Python package: enroll,
-vault, identities, recognition, liveness, pipe_protocol, mien_engine).
+vault, identities, recognition, liveness, pipe_protocol, visage_engine).
 This module is the *only* place that imports it, so the UI never depends
 on engine internals directly.
 
@@ -39,12 +39,12 @@ from typing import Any, Iterator, Optional
 from .errors import (
     CameraUnavailableError,
     EngineUnavailableError,
-    MienError,
+    VisageError,
     StoreError,
     VaultUnavailableError,
 )
 
-log = logging.getLogger("mien")
+log = logging.getLogger("visage")
 
 # ---------------------------------------------------------------------------
 # Shared data shapes (stable regardless of which implementation is active)
@@ -182,7 +182,7 @@ VERDICT_COPY = {
 # Engine package loading
 # ---------------------------------------------------------------------------
 
-_ENGINE_PKG_NAME = "mien_engine_pkg"
+_ENGINE_PKG_NAME = "visage_engine_pkg"
 
 
 def _engine_dir() -> Path:
@@ -351,7 +351,7 @@ class EngineBridge:
         if not self.vault_available:
             raise VaultUnavailableError(
                 "The secure vault isn't available on this machine.",
-                "Storing your password needs Windows and the Mien engine.",
+                "Storing your password needs Windows and the Visage engine.",
             )
         try:
             self._vault_mod.save_credentials(self._vault_path(), username, domain or "", password)
@@ -359,7 +359,7 @@ class EngineBridge:
             # Fixed strings only — the password and any crypto detail
             # must never reach a message, a log, or a traceback shown to UI.
             log.warning("vault save failed: %s", type(exc).__name__)
-            raise MienError(
+            raise VisageError(
                 "Your password couldn't be stored securely.",
                 "Make sure you're on Windows with a normal user profile, then try again.",
             ) from exc
@@ -393,7 +393,7 @@ class EngineBridge:
             self._vault_mod.delete_vault(self._vault_path())
         except Exception as exc:
             log.warning("vault delete failed: %s", type(exc).__name__)
-            raise MienError("The stored password couldn't be removed.", "Please try again.") from exc
+            raise VisageError("The stored password couldn't be removed.", "Please try again.") from exc
 
     # -- cameras ---------------------------------------------------------------
     def list_cameras(self) -> list[CameraInfo]:
@@ -462,7 +462,7 @@ class EngineBridge:
         import numpy as np
         arr = np.ascontiguousarray(frame_rgb)
         if arr.ndim != 3 or arr.shape[2] != 3:
-            raise MienError("That frame didn't work — hold still.")
+            raise VisageError("That frame didn't work — hold still.")
         return cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
 
     def detect_live(self, frame_rgb) -> list[dict]:
@@ -491,19 +491,19 @@ class EngineBridge:
         try:
             detections = detector.detect(frame_bgr)
         except Exception as exc:
-            raise MienError("Having trouble seeing faces right now.") from exc
+            raise VisageError("Having trouble seeing faces right now.") from exc
         faces = [d for d in detections or []
                  if getattr(d, "box", None) and len(d.box) == 4]
         if not faces:
-            raise MienError("No face detected in frame.")
+            raise VisageError("No face detected in frame.")
         face = max(faces, key=lambda d: d.box[2] * d.box[3])
         try:
             aligned = rec_mod.align_face(frame_bgr, face.landmarks)
             embedding = embedder.embedding(aligned)
         except Exception as exc:
-            raise MienError("Could not read that face clearly.") from exc
+            raise VisageError("Could not read that face clearly.") from exc
         if not _valid_embedding(embedding):
-            raise MienError("Could not read that face clearly.")
+            raise VisageError("Could not read that face clearly.")
         import numpy as np
         return np.asarray(embedding, dtype=np.float32), tuple(int(v) for v in face.box)
 
@@ -547,7 +547,7 @@ class EngineBridge:
                 store.add_identity(name, [embedding])
             else:
                 store.add_embedding(name, embedding)
-        except MienError:
+        except VisageError:
             raise
         except Exception as exc:
             raise StoreError("That sample couldn't be saved.", "Please try again.") from exc
@@ -619,7 +619,7 @@ class _RealEnrollmentSession(BaseEnrollmentSession):
             if d not in POSE_BY_ENGINE_KEY:
                 raise EngineUnavailableError(
                     "The face engine uses a head direction this app doesn't know.",
-                    "Update Mien Manager to match the installed engine.",
+                    "Update Visage Manager to match the installed engine.",
                 )
 
     def process_frame(self, frame_rgb) -> FrameOutcome:

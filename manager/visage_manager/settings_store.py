@@ -1,7 +1,7 @@
 """Persisted Manager settings (JSON, per-user).
 
-Windows: %APPDATA%\\Mien\\manager-settings.json
-Other:   ~/.config/mien/manager-settings.json
+Windows: %APPDATA%\\Visage\\manager-settings.json
+Other:   ~/.config/visage/manager-settings.json
 
 Mirrors the spirit of GlanceSettings: writes go through immediately, and
 the file is plain JSON so it can be inspected or reset by hand.
@@ -29,8 +29,8 @@ _DEFAULTS = {
 def _settings_path() -> Path:
     if os.name == "nt":
         base = Path(os.environ.get("APPDATA", str(Path.home())))
-        return base / "Mien" / "manager-settings.json"
-    return Path.home() / ".config" / "mien" / "manager-settings.json"
+        return base / "Visage" / "manager-settings.json"
+    return Path.home() / ".config" / "visage" / "manager-settings.json"
 
 
 class SettingsStore:

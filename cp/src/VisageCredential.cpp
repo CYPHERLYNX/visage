@@ -1,5 +1,5 @@
-// MienCredential.cpp
-#include "MienCredential.h"
+// VisageCredential.cpp
+#include "VisageCredential.h"
 #include "JsonMini.h"
 #include "KerbPack.h"
 #include "Guids.h"
@@ -14,12 +14,12 @@
 extern long g_cRef;
 extern HINSTANCE g_hInst;
 
-namespace mien
+namespace visage
 {
 
 namespace
 {
-constexpr UINT WM_MIEN_SCAN = WM_APP + 0x4D49;
+constexpr UINT WM_VISAGE_SCAN = WM_APP + 0x4D49;
 constexpr LONG kMaxAttempts = 3;
 constexpr DWORD kEngineTimeoutMs = 15000;  // matches pipe protocol timeout_ms
 constexpr DWORD kOverallScanMs = 30000;    // hard cap per attempt
@@ -69,7 +69,7 @@ bool IsScanning(ScanState s)
 }
 } // namespace
 
-CMienCredential::CMienCredential(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus,
+CVisageCredential::CVisageCredential(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus,
                                  DWORD ulAuthPackage,
                                  bool haveLogonId, LUID logonId)
     : m_cRef(1)
@@ -101,7 +101,7 @@ CMienCredential::CMienCredential(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus,
     }
 }
 
-CMienCredential::~CMienCredential()
+CVisageCredential::~CVisageCredential()
 {
     // The worker AddRefs for its lifetime, so reaching the destructor means
     // no worker is running. Anything left is defensive cleanup.
@@ -141,7 +141,7 @@ CMienCredential::~CMienCredential()
 
 // ---------- IUnknown ----------
 
-STDMETHODIMP CMienCredential::QueryInterface(REFIID riid, void** ppv)
+STDMETHODIMP CVisageCredential::QueryInterface(REFIID riid, void** ppv)
 {
     if (ppv == nullptr)
     {
@@ -160,12 +160,12 @@ STDMETHODIMP CMienCredential::QueryInterface(REFIID riid, void** ppv)
     return S_OK;
 }
 
-STDMETHODIMP_(ULONG) CMienCredential::AddRef()
+STDMETHODIMP_(ULONG) CVisageCredential::AddRef()
 {
     return static_cast<ULONG>(InterlockedIncrement(&m_cRef));
 }
 
-STDMETHODIMP_(ULONG) CMienCredential::Release()
+STDMETHODIMP_(ULONG) CVisageCredential::Release()
 {
     LONG c = InterlockedDecrement(&m_cRef);
     if (c == 0)
@@ -177,12 +177,12 @@ STDMETHODIMP_(ULONG) CMienCredential::Release()
 
 // ---------- message window (STA thread) ----------
 
-LRESULT CALLBACK CMienCredential::MessageWndProc(HWND hwnd, UINT msg,
+LRESULT CALLBACK CVisageCredential::MessageWndProc(HWND hwnd, UINT msg,
                                                  WPARAM wp, LPARAM lp)
 {
-    if (msg == WM_MIEN_SCAN)
+    if (msg == WM_VISAGE_SCAN)
     {
-        auto* self = reinterpret_cast<CMienCredential*>(
+        auto* self = reinterpret_cast<CVisageCredential*>(
             GetWindowLongPtrW(hwnd, GWLP_USERDATA));
         if (self != nullptr)
         {
@@ -194,13 +194,13 @@ LRESULT CALLBACK CMienCredential::MessageWndProc(HWND hwnd, UINT msg,
     return DefWindowProcW(hwnd, msg, wp, lp);
 }
 
-HRESULT CMienCredential::EnsureMessageWindow()
+HRESULT CVisageCredential::EnsureMessageWindow()
 {
     if (m_hwndMessage != nullptr)
     {
         return S_OK;
     }
-    static const wchar_t* kClass = L"MienCPMsgWindow";
+    static const wchar_t* kClass = L"VisageCPMsgWindow";
     WNDCLASSEXW wc{};
     if (!GetClassInfoExW(g_hInst, kClass, &wc))
     {
@@ -224,7 +224,7 @@ HRESULT CMienCredential::EnsureMessageWindow()
     return S_OK;
 }
 
-void CMienCredential::DestroyMessageWindow()
+void CVisageCredential::DestroyMessageWindow()
 {
     if (m_hwndMessage != nullptr)
     {
@@ -235,7 +235,7 @@ void CMienCredential::DestroyMessageWindow()
 
 // ---------- Advise / UnAdvise ----------
 
-STDMETHODIMP CMienCredential::Advise(
+STDMETHODIMP CVisageCredential::Advise(
     ICredentialProviderCredentialEvents* pcpce)
 {
     if (pcpce == nullptr)
@@ -253,12 +253,12 @@ STDMETHODIMP CMienCredential::Advise(
     HRESULT hr = EnsureMessageWindow();
     if (FAILED(hr))
     {
-        MIEN_TRACE(L"Advise: no message window (hr=0x%08x)", hr);
+        VISAGE_TRACE(L"Advise: no message window (hr=0x%08x)", hr);
     }
     return S_OK;
 }
 
-STDMETHODIMP CMienCredential::UnAdvise()
+STDMETHODIMP CVisageCredential::UnAdvise()
 {
     RequestStop(true);
     DestroyMessageWindow();
@@ -272,7 +272,7 @@ STDMETHODIMP CMienCredential::UnAdvise()
 
 // ---------- selection ----------
 
-STDMETHODIMP CMienCredential::SetSelected(BOOL* pbAutoLogon)
+STDMETHODIMP CVisageCredential::SetSelected(BOOL* pbAutoLogon)
 {
     if (pbAutoLogon == nullptr)
     {
@@ -294,7 +294,7 @@ STDMETHODIMP CMienCredential::SetSelected(BOOL* pbAutoLogon)
     return S_OK;
 }
 
-STDMETHODIMP CMienCredential::SetDeselected()
+STDMETHODIMP CVisageCredential::SetDeselected()
 {
     RequestStop(true);
     // A deselect starts a fresh session: attempts reset, tile goes idle.
@@ -312,7 +312,7 @@ STDMETHODIMP CMienCredential::SetDeselected()
 
 // ---------- worker thread ----------
 
-void CMienCredential::PostUpdate(ScanState state, const wchar_t* text)
+void CVisageCredential::PostUpdate(ScanState state, const wchar_t* text)
 {
     // Always apply the state under the lock so the tile's field getters see
     // it even if the message window is gone; the window message then only
@@ -330,11 +330,11 @@ void CMienCredential::PostUpdate(ScanState state, const wchar_t* text)
     if (hwnd != nullptr)
     {
         // wp == 0 means "refresh from current member state".
-        PostMessageW(hwnd, WM_MIEN_SCAN, 0, 0);
+        PostMessageW(hwnd, WM_VISAGE_SCAN, 0, 0);
     }
 }
 
-void CMienCredential::StartScan()
+void CVisageCredential::StartScan()
 {
     EnterCriticalSection(&m_cs);
     if (m_hThread != nullptr)
@@ -374,7 +374,7 @@ void CMienCredential::StartScan()
     RefreshTile();
 }
 
-void CMienCredential::RequestStop(bool wait)
+void CVisageCredential::RequestStop(bool wait)
 {
     HANDLE hThread = nullptr;
     EnterCriticalSection(&m_cs);
@@ -405,9 +405,9 @@ void CMienCredential::RequestStop(bool wait)
     LeaveCriticalSection(&m_cs);
 }
 
-DWORD WINAPI CMienCredential::ScanThreadProc(LPVOID pv)
+DWORD WINAPI CVisageCredential::ScanThreadProc(LPVOID pv)
 {
-    auto* self = static_cast<CMienCredential*>(pv);
+    auto* self = static_cast<CVisageCredential*>(pv);
     try
     {
         self->RunScan();
@@ -432,7 +432,7 @@ DWORD WINAPI CMienCredential::ScanThreadProc(LPVOID pv)
 // Records one failed attempt. attemptText is the engine's human-readable
 // message (or our own timeout/pipe message). After kMaxAttempts the tile
 // locks out and points the user at their password.
-void CMienCredential::FailAttempt(const wchar_t* attemptText)
+void CVisageCredential::FailAttempt(const wchar_t* attemptText)
 {
     LONG attempts = 0;
     EnterCriticalSection(&m_cs);
@@ -471,7 +471,7 @@ const wchar_t* ReasonToCopy(const std::wstring& reason)
     return L"Something went wrong.";
 }
 
-HRESULT CMienCredential::RunScan()
+HRESULT CVisageCredential::RunScan()
 {
     PostUpdate(ScanState::Scanning, L"Looking for your face\u2026");
 
@@ -482,7 +482,7 @@ HRESULT CMienCredential::RunScan()
         VaultCreds probe;
         if (FAILED(ReadVaultCreds(probe)))
         {
-            MIEN_TRACE(L"RunScan: no readable vault, not scanning");
+            VISAGE_TRACE(L"RunScan: no readable vault, not scanning");
             PostUpdate(ScanState::EngineError, kUnavailableText);
             return E_FAIL;
         }
@@ -492,7 +492,7 @@ HRESULT CMienCredential::RunScan()
     HRESULT hr = pipe.Connect(12000, m_hCancelEvent);
     if (FAILED(hr))
     {
-        MIEN_TRACE(L"RunScan: engine connect failed (hr=0x%08x)", hr);
+        VISAGE_TRACE(L"RunScan: engine connect failed (hr=0x%08x)", hr);
         EnterCriticalSection(&m_cs);
         m_engineAvailable = false;
         LeaveCriticalSection(&m_cs);
@@ -507,7 +507,7 @@ HRESULT CMienCredential::RunScan()
     hr = pipe.SendLine(authCmd);
     if (FAILED(hr))
     {
-        MIEN_TRACE(L"RunScan: send failed (hr=0x%08x)", hr);
+        VISAGE_TRACE(L"RunScan: send failed (hr=0x%08x)", hr);
         PostUpdate(ScanState::EngineError, kUnavailableText);
         return hr;
     }
@@ -525,7 +525,7 @@ HRESULT CMienCredential::RunScan()
         {
             // The engine went quiet: that is an engine problem, not a failed
             // recognition. Do not burn an attempt; degrade gracefully.
-            MIEN_TRACE(L"RunScan: overall deadline hit");
+            VISAGE_TRACE(L"RunScan: overall deadline hit");
             PostUpdate(ScanState::EngineError, kUnavailableText);
             return HRESULT_FROM_WIN32(ERROR_TIMEOUT);
         }
@@ -541,7 +541,7 @@ HRESULT CMienCredential::RunScan()
         if (FAILED(hr))
         {
             // Broken pipe mid-scan: engine problem, not a failed match.
-            MIEN_TRACE(L"RunScan: read failed (hr=0x%08x)", hr);
+            VISAGE_TRACE(L"RunScan: read failed (hr=0x%08x)", hr);
             PostUpdate(ScanState::EngineError, kUnavailableText);
             return hr;
         }
@@ -557,7 +557,7 @@ HRESULT CMienCredential::RunScan()
             // means the engine is misbehaving -> unavailable, not a retry loop.
             if (++malformed > kMaxMalformedLines)
             {
-                MIEN_TRACE(L"RunScan: too many malformed lines");
+                VISAGE_TRACE(L"RunScan: too many malformed lines");
                 PostUpdate(ScanState::EngineError, kUnavailableText);
                 return E_FAIL;
             }
@@ -623,7 +623,7 @@ HRESULT CMienCredential::RunScan()
 
 // ---------- STA-side tile refresh ----------
 
-void CMienCredential::RefreshTile()
+void CVisageCredential::RefreshTile()
 {
     if (m_pEvents == nullptr)
     {
@@ -655,7 +655,7 @@ void CMienCredential::RefreshTile()
 
 // ---------- field getters ----------
 
-STDMETHODIMP CMienCredential::GetFieldState(
+STDMETHODIMP CVisageCredential::GetFieldState(
     DWORD dwFieldID,
     CREDENTIAL_PROVIDER_FIELD_STATE* pcpfs,
     CREDENTIAL_PROVIDER_FIELD_INTERACTIVE_STATE* pcpfis)
@@ -704,7 +704,7 @@ STDMETHODIMP CMienCredential::GetFieldState(
     return S_OK;
 }
 
-STDMETHODIMP CMienCredential::GetStringValue(DWORD dwFieldID, PWSTR* ppwsz)
+STDMETHODIMP CVisageCredential::GetStringValue(DWORD dwFieldID, PWSTR* ppwsz)
 {
     if (ppwsz == nullptr)
     {
@@ -740,7 +740,7 @@ STDMETHODIMP CMienCredential::GetStringValue(DWORD dwFieldID, PWSTR* ppwsz)
     }
 }
 
-STDMETHODIMP CMienCredential::GetBitmapValue(DWORD dwFieldID, HBITMAP* phbmp)
+STDMETHODIMP CVisageCredential::GetBitmapValue(DWORD dwFieldID, HBITMAP* phbmp)
 {
     if (phbmp == nullptr)
     {
@@ -759,7 +759,7 @@ STDMETHODIMP CMienCredential::GetBitmapValue(DWORD dwFieldID, HBITMAP* phbmp)
             0, 0, LR_DEFAULTCOLOR));
         if (m_hTileBitmap == nullptr)
         {
-            MIEN_TRACE(L"GetBitmapValue: tile bitmap missing (%u)", GetLastError());
+            VISAGE_TRACE(L"GetBitmapValue: tile bitmap missing (%u)", GetLastError());
             return E_FAIL;
         }
     }
@@ -767,12 +767,12 @@ STDMETHODIMP CMienCredential::GetBitmapValue(DWORD dwFieldID, HBITMAP* phbmp)
     return S_OK;
 }
 
-STDMETHODIMP CMienCredential::GetCheckboxValue(DWORD, BOOL*, PWSTR*)
+STDMETHODIMP CVisageCredential::GetCheckboxValue(DWORD, BOOL*, PWSTR*)
 {
     return E_NOTIMPL; // no checkbox fields
 }
 
-STDMETHODIMP CMienCredential::GetSubmitButtonValue(DWORD dwFieldID,
+STDMETHODIMP CVisageCredential::GetSubmitButtonValue(DWORD dwFieldID,
                                                    DWORD* pdwAdjacentTo)
 {
     if (pdwAdjacentTo == nullptr)
@@ -787,39 +787,39 @@ STDMETHODIMP CMienCredential::GetSubmitButtonValue(DWORD dwFieldID,
     return S_OK;
 }
 
-STDMETHODIMP CMienCredential::GetComboBoxValueCount(DWORD, DWORD*, DWORD*)
+STDMETHODIMP CVisageCredential::GetComboBoxValueCount(DWORD, DWORD*, DWORD*)
 {
     return E_NOTIMPL; // no combo boxes
 }
 
-STDMETHODIMP CMienCredential::GetComboBoxValueAt(DWORD, DWORD, PWSTR*)
+STDMETHODIMP CVisageCredential::GetComboBoxValueAt(DWORD, DWORD, PWSTR*)
 {
     return E_NOTIMPL; // no combo boxes
 }
 
-STDMETHODIMP CMienCredential::SetStringValue(HWND, DWORD, PCWSTR)
+STDMETHODIMP CVisageCredential::SetStringValue(HWND, DWORD, PCWSTR)
 {
     return E_NOTIMPL; // no editable fields
 }
 
-STDMETHODIMP CMienCredential::SetCheckboxValue(HWND, DWORD, BOOL, PCWSTR)
+STDMETHODIMP CVisageCredential::SetCheckboxValue(HWND, DWORD, BOOL, PCWSTR)
 {
     return E_NOTIMPL; // no checkbox fields
 }
 
-STDMETHODIMP CMienCredential::SetComboBoxSelectedValue(HWND, DWORD, DWORD)
+STDMETHODIMP CVisageCredential::SetComboBoxSelectedValue(HWND, DWORD, DWORD)
 {
     return E_NOTIMPL; // no combo boxes
 }
 
-STDMETHODIMP CMienCredential::CommandLinkClicked(HWND, DWORD)
+STDMETHODIMP CVisageCredential::CommandLinkClicked(HWND, DWORD)
 {
     return E_NOTIMPL; // no command links
 }
 
 // ---------- submission ----------
 
-STDMETHODIMP CMienCredential::GetSerialization(
+STDMETHODIMP CVisageCredential::GetSerialization(
     CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE* pcpgsr,
     CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs,
     PWSTR* ppwszOptionalStatusText,
@@ -885,7 +885,7 @@ STDMETHODIMP CMienCredential::GetSerialization(
     HRESULT hr = ReadVaultCreds(creds);
     if (FAILED(hr))
     {
-        MIEN_TRACE(L"GetSerialization: vault read failed (hr=0x%08x)", hr);
+        VISAGE_TRACE(L"GetSerialization: vault read failed (hr=0x%08x)", hr);
         PostUpdate(ScanState::EngineError, kUnavailableText);
         EnterCriticalSection(&m_cs);
         m_authSucceeded = false;
@@ -928,7 +928,7 @@ STDMETHODIMP CMienCredential::GetSerialization(
     // creds.password is zeroed inside BuildKerbUnlockSerialization in all paths.
     if (FAILED(hr) || rgb == nullptr || cb == 0)
     {
-        MIEN_TRACE(L"GetSerialization: KERB build failed (hr=0x%08x)", hr);
+        VISAGE_TRACE(L"GetSerialization: KERB build failed (hr=0x%08x)", hr);
         if (rgb != nullptr)
         {
             SecureZeroMemory(rgb, cb);
@@ -943,14 +943,14 @@ STDMETHODIMP CMienCredential::GetSerialization(
     }
 
     pcpcs->ulAuthenticationPackage = m_ulAuthPackage;
-    pcpcs->clsidCredentialProvider = CLSID_MienProvider;
+    pcpcs->clsidCredentialProvider = CLSID_VisageProvider;
     pcpcs->rgbSerialization = rgb;   // LogonUI takes ownership (CoTaskMemFree)
     pcpcs->cbSerialization = cb;
     *pcpgsr = CPGSR_RETURN_CREDENTIAL_FINISHED;
     return S_OK;
 }
 
-STDMETHODIMP CMienCredential::ReportResult(
+STDMETHODIMP CVisageCredential::ReportResult(
     NTSTATUS ntsStatus, NTSTATUS ntsSubstatus,
     PWSTR* ppwszOptionalStatusText,
     CREDENTIAL_PROVIDER_STATUS_ICON* pcpsiOptionalStatusIcon)
@@ -976,7 +976,7 @@ STDMETHODIMP CMienCredential::ReportResult(
     // Windows rejected the KERB blob. The usual cause is a stale vault
     // (password changed after enrollment). Do NOT burn face attempts for
     // this; tell the user plainly and require a fresh scan afterwards.
-    MIEN_TRACE(L"ReportResult: logon rejected (0x%08x/0x%08x)",
+    VISAGE_TRACE(L"ReportResult: logon rejected (0x%08x/0x%08x)",
                static_cast<unsigned>(ntsStatus),
                static_cast<unsigned>(ntsSubstatus));
     EnterCriticalSection(&m_cs);
@@ -998,4 +998,4 @@ STDMETHODIMP CMienCredential::ReportResult(
     return S_OK;
 }
 
-} // namespace mien
+} // namespace visage

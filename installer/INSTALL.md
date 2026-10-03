@@ -1,8 +1,8 @@
-# Mien - Installation
+# Visage - Installation
 
-One command installs Mien (face unlock for Windows 10/11, 64-bit). No manual
+One command installs Visage (face unlock for Windows 10/11, 64-bit). No manual
 steps: the script checks prerequisites, installs dependencies, downloads the
-face models, writes the default config, and registers the Mien sign-in tile.
+face models, writes the default config, and registers the Visage sign-in tile.
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ face models, writes the default config, and registers the Mien sign-in tile.
 Download the latest release zip, unzip it, then in PowerShell:
 
 ```powershell
-cd <where-you-unzipped-it>\mien\installer
+cd <where-you-unzipped-it>\visage\installer
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
 ```
 
@@ -36,17 +36,17 @@ relaunches itself. From there it is hands-off until the summary at the end.
 | # | Step | What happens |
 |---|------|--------------|
 | 1 | Checks | Verifies Windows 10/11 x64 and Python 3.10+ on PATH. If Python is missing, setup tells you exactly where to get it and stops cleanly - nothing is installed. |
-| 2 | Data folders | Creates `C:\ProgramData\Mien\` with `models\` and `identities\`, then locks the ACLs to **SYSTEM + Administrators only** (no inheritance). Re-running repairs the ACLs. |
+| 2 | Data folders | Creates `C:\ProgramData\Visage\` with `models\` and `identities\`, then locks the ACLs to **SYSTEM + Administrators only** (no inheritance). Re-running repairs the ACLs. |
 | 3 | Python packages | Runs `pip install -r ..\engine\requirements.txt` (progress shown). On failure it prints the exact remedy and stops. |
 | 4 | Face models | Runs `python ..\engine\fetch_models.py`, which downloads the YuNet + ArcFace ONNX models with hash verification. Already-verified files are kept, so a re-run resumes instead of restarting. |
-| 5 | Default config | Writes `C:\ProgramData\Mien\config.json` (match threshold 0.66, strictness heavy) - the machine-wide defaults the engine reads at startup. An existing config is **never** overwritten - if it is corrupt, it is backed up to `config.json.bak.<timestamp>` first. |
-| 6 | Sign-in tile | Runs `..\cp\register.ps1` to register the Mien Credential Provider. If `register.ps1` is missing (CP not built yet), setup says so clearly, installs everything else, and asks you to re-run it later - it never fails silently. |
+| 5 | Default config | Writes `C:\ProgramData\Visage\config.json` (match threshold 0.66, strictness heavy) - the machine-wide defaults the engine reads at startup. An existing config is **never** overwritten - if it is corrupt, it is backed up to `config.json.bak.<timestamp>` first. |
+| 6 | Sign-in tile | Runs `..\cp\register.ps1` to register the Visage Credential Provider. If `register.ps1` is missing (CP not built yet), setup says so clearly, installs everything else, and asks you to re-run it later - it never fails silently. |
 | 7 | Verify | Runs the engine's pipe-protocol self-test (`..\engine\selftest.py`) when present. Otherwise it prints a manual checklist (Win+L, look for the tile, reboot if missing). |
 
 Final summary shows per-step results, what was installed and where, and the
 exact 3 steps to enroll:
 
-1. Open the Mien Manager app (Start menu -> Mien Manager).
+1. Open the Visage Manager app (Start menu -> Visage Manager).
 2. Click "Enroll face" and follow the on-screen guide.
 3. Done. Press Win+L to lock Windows, then look at the camera.
 
@@ -64,25 +64,25 @@ install instead of breaking a working one.
 | `File ...\setup.ps1 cannot be loaded` / execution-policy error | PowerShell blocks unsigned scripts | Launch with `powershell -ExecutionPolicy Bypass -File .\setup.ps1`, or run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` once |
 | `Python 3.10 or newer was not found` | Python missing, or installed without PATH | Install from https://www.python.org/downloads/ with **"Add python.exe to PATH"** ticked, close and reopen PowerShell, re-run setup |
 | `pip install` fails with red errors | No internet, or pip too old | Check the connection, run `python -m pip install --upgrade pip`, then re-run `.\setup.ps1` - the failing package is named in the red lines |
-| Model download fails / is very slow | No internet, low disk space, or a hash mismatch | Free 1+ GB on C:, check the connection, re-run setup (verified files are kept); on a hash mismatch delete `C:\ProgramData\Mien\models` and re-run |
-| No Mien tile on the lock screen | Not registered, or Windows has not loaded it yet | Re-run setup as Administrator; then **reboot once** - Windows only loads credential providers at boot; then press Win+L |
+| Model download fails / is very slow | No internet, low disk space, or a hash mismatch | Free 1+ GB on C:, check the connection, re-run setup (verified files are kept); on a hash mismatch delete `C:\ProgramData\Visage\models` and re-run |
+| No Visage tile on the lock screen | Not registered, or Windows has not loaded it yet | Re-run setup as Administrator; then **reboot once** - Windows only loads credential providers at boot; then press Win+L |
 
 Also: if the camera light never comes on during a test, close any other app
 using the camera (Zoom, Teams, browser tabs) and try again. Enroll your face
-in Mien Manager *before* testing unlock - the tile does nothing until an
+in Visage Manager *before* testing unlock - the tile does nothing until an
 identity exists.
 
 ## Uninstall
 
 ```powershell
-cd <where-you-unzipped-it>\mien\installer
+cd <where-you-unzipped-it>\visage\installer
 powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
 ```
 
 It unregisters the sign-in tile (via `..\cp\unregister.ps1`), stops running
-Mien processes, asks for confirmation (`YES`), then deletes
-`C:\ProgramData\Mien` and verifies it is gone. Removing the Python packages
-is optional (asked at the end). The Mien program folder itself is left in
+Visage processes, asks for confirmation (`YES`), then deletes
+`C:\ProgramData\Visage` and verifies it is gone. Removing the Python packages
+is optional (asked at the end). The Visage program folder itself is left in
 place - delete it yourself if you want it gone too.
 
 ## Files

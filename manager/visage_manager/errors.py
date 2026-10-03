@@ -10,10 +10,10 @@ from __future__ import annotations
 import logging
 import traceback
 
-log = logging.getLogger("mien")
+log = logging.getLogger("visage")
 
 
-class MienError(Exception):
+class VisageError(Exception):
     """Base for expected, user-facing failures."""
 
     def __init__(self, message: str, remedy: str = ""):
@@ -27,29 +27,29 @@ class MienError(Exception):
         return self.message
 
 
-class EngineUnavailableError(MienError):
+class EngineUnavailableError(VisageError):
     pass
 
 
-class CameraUnavailableError(MienError):
+class CameraUnavailableError(VisageError):
     pass
 
 
-class VaultUnavailableError(MienError):
+class VaultUnavailableError(VisageError):
     pass
 
 
-class CredentialProviderError(MienError):
+class CredentialProviderError(VisageError):
     pass
 
 
-class StoreError(MienError):
+class StoreError(VisageError):
     pass
 
 
 def humanize(exc: BaseException) -> str:
     """Turn any exception into a calm, actionable message for the UI."""
-    if isinstance(exc, MienError):
+    if isinstance(exc, VisageError):
         return exc.full_text()
 
     name = type(exc).__name__
@@ -57,16 +57,16 @@ def humanize(exc: BaseException) -> str:
 
     mapping = {
         "FileNotFoundError": (
-            "A file Mien needs is missing.",
-            "Reinstall Mien Manager, then try again. If it keeps happening, check the log for the missing path.",
+            "A file Visage needs is missing.",
+            "Reinstall Visage Manager, then try again. If it keeps happening, check the log for the missing path.",
         ),
         "PermissionError": (
-            "Mien was blocked by a file or device permission.",
-            "Try running Mien Manager as administrator, then try again.",
+            "Visage was blocked by a file or device permission.",
+            "Try running Visage Manager as administrator, then try again.",
         ),
         "ConnectionError": (
-            "Mien could not reach a local service it depends on.",
-            "Make sure the Mien engine service is installed and running, then try again.",
+            "Visage could not reach a local service it depends on.",
+            "Make sure the Visage engine service is installed and running, then try again.",
         ),
         "TimeoutError": (
             "The operation took too long and was stopped.",
@@ -74,7 +74,7 @@ def humanize(exc: BaseException) -> str:
         ),
         "ImportError": (
             "A required component could not be loaded.",
-            "On Windows, install the requirements (pip install -r requirements.txt) and restart Mien Manager.",
+            "On Windows, install the requirements (pip install -r requirements.txt) and restart Visage Manager.",
         ),
     }
     if name in mapping:

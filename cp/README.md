@@ -1,6 +1,6 @@
-# MienCP - Face Unlock credential provider for Windows
+# VisageCP - Face Unlock credential provider for Windows
 
-A native C++ COM credential provider (`MienCP.dll`) that adds a single
+A native C++ COM credential provider (`VisageCP.dll`) that adds a single
 "Face Unlock" tile to the Windows sign-in and lock screens. It is the
 Windows rebuild of the `jonnyoo/glance` Mac unlock pipeline: tile, scan
 states, challenge prompt, password submission - expressed through the
@@ -14,7 +14,7 @@ built-in password/PIN providers. See `TRUST_MODEL.md`.
 ```
 User selects "Face Unlock" tile
   -> SetSelected starts a worker thread (UI thread never blocks)
-  -> worker connects to \\.\pipe\MienAuth (spawns the engine if absent)
+  -> worker connects to \\.\pipe\VisageAuth (spawns the engine if absent)
   -> sends {"cmd":"authenticate","timeout_ms":15000}
   -> engine streams status lines; the tile shows them live:
        scanning -> "Looking for your face..."
@@ -24,7 +24,7 @@ User selects "Face Unlock" tile
        failure    -> "<message> Try again." (max 3 attempts, then the
                      "Face unlock unavailable - use your password or PIN."
                      fallback)
-  -> user presses Enter -> GetSerialization reads C:\ProgramData\Mien\vault.dat,
+  -> user presses Enter -> GetSerialization reads C:\ProgramData\Visage\vault.dat,
      DPAPI-decrypts it (LocalMachine scope), builds a KERB_INTERACTIVE_UNLOCK_LOGON
      blob, and hands it to LSA. The password buffer is SecureZeroMemory'd
      immediately after packing.
@@ -37,7 +37,7 @@ sends `{"cmd":"cancel"}` and returns the tile to idle.
 
 ```
 cp/
-  MienCP.sln / MienCP.vcxproj   VS2022, x64 only, /W4 + SDLCheck
+  VisageCP.sln / VisageCP.vcxproj   VS2022, x64 only, /W4 + SDLCheck
   register.ps1 / unregister.ps1 admin registration (fully reversible)
   BUILD.md                      exact build steps
   TEST_PLAN.md                   VM-first test matrix + recovery
@@ -45,14 +45,14 @@ cp/
   src/
     Dll.cpp                     DllMain, class factory, DllRegister/UnregisterServer
     Guids.h                     CLSID {794AAC04-6CB6-4C77-A828-27C20D0F820D}
-    MienProvider.*              ICredentialProvider (one tile, logon+unlock only)
-    MienCredential.*            ICredentialProviderCredential + scan state machine
+    VisageProvider.*              ICredentialProvider (one tile, logon+unlock only)
+    VisageCredential.*            ICredentialProviderCredential + scan state machine
     PipeClient.*                JSONL pipe client, timeouts, engine spawning
     Vault.*                     DPAPI vault read (decrypt-at-submit only)
     KerbPack.*                  KERB_INTERACTIVE_UNLOCK_LOGON builder
     JsonMini.h                  strict flat-JSON reader (whitelists, 8 KB cap)
     Common.h                    zeroing buffers, debug tracing (Release: compiled out)
-    resources.rc / resource.h / MienCP.def / res/tile.bmp
+    resources.rc / resource.h / VisageCP.def / res/tile.bmp
   test/
     fake_engine.py              scripted pipe server (success/no_face/spoof/
                                 timeout/slow_cancel/challenge)
@@ -63,17 +63,17 @@ cp/
 
 | Setting | Location |
 |---|---|
-| Engine script | `C:\ProgramData\Mien\engine\mien_engine.py` (fixed path) |
-| Vault | `C:\ProgramData\Mien\vault.dat` (DPAPI LocalMachine; ACL: SYSTEM + Administrators) |
-| Python for engine spawn | `HKLM\SOFTWARE\Mien\PythonPath` (REG_SZ, written by installer); fallback: `C:\Windows\py.exe`; last resort: PATH `pythonw.exe` |
-| Pipe | `\\.\pipe\MienAuth` (server side enforces SYSTEM/Administrators DACL) |
+| Engine script | `C:\ProgramData\Visage\engine\visage_engine.py` (fixed path) |
+| Vault | `C:\ProgramData\Visage\vault.dat` (DPAPI LocalMachine; ACL: SYSTEM + Administrators) |
+| Python for engine spawn | `HKLM\SOFTWARE\Visage\PythonPath` (REG_SZ, written by installer); fallback: `C:\Windows\py.exe`; last resort: PATH `pythonw.exe` |
+| Pipe | `\\.\pipe\VisageAuth` (server side enforces SYSTEM/Administrators DACL) |
 
 ## Glance ditto mapping (behavior)
 
 Studied: `FaceUnlockCoordinator.swift`, `NotchOverlayController.swift`,
 `ScanAnimationView.swift` in `glance-reference/`.
 
-| Glance (Mac) | MienCP (this) |
+| Glance (Mac) | VisageCP (this) |
 |---|---|
 | Overlay phases: closed -> scanning -> success / failure | Tile states: Idle -> Scanning -> FaceFound -> Challenge -> Success / Failed |
 | `statusMessage = "Looking for your face..."` | Same tile copy |

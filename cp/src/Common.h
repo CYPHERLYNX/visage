@@ -1,5 +1,5 @@
 // Common.h
-// Shared helpers for the Mien credential provider.
+// Shared helpers for the Visage credential provider.
 //
 // Logging policy: OutputDebugStringW only, and NEVER log secrets (no
 // passwords, no vault bytes, no pipe payloads that could carry them).
@@ -10,7 +10,7 @@
 #include <strsafe.h>
 #include <vector>
 
-namespace mien
+namespace visage
 {
 
 // Debug-only trace. Compiles to nothing in Release so a shipping DLL can
@@ -23,14 +23,14 @@ inline void Trace(const wchar_t* fmt, ...)
     va_start(ap, fmt);
     StringCchVPrintfW(buf, ARRAYSIZE(buf), fmt, ap);
     va_end(ap);
-    OutputDebugStringW(L"[MienCP] ");
+    OutputDebugStringW(L"[VisageCP] ");
     OutputDebugStringW(buf);
     OutputDebugStringW(L"\n");
 }
-#define MIEN_TRACE mien::Trace
+#define VISAGE_TRACE visage::Trace
 #else
 inline void Trace(const wchar_t*, ...) {}
-#define MIEN_TRACE(...) ((void)0)
+#define VISAGE_TRACE(...) ((void)0)
 #endif
 
 // RAII buffer that zeroes its contents on destruction. Use for anything
@@ -158,4 +158,4 @@ inline HRESULT DupString(const wchar_t* src, wchar_t** out)
     return S_OK;
 }
 
-} // namespace mien
+} // namespace visage

@@ -36,7 +36,7 @@ IDENTITY_VERSION = 1
 
 def default_identities_path() -> str:
     if os.name == "nt":
-        return r"C:\ProgramData\Mien\identities.dat"
+        return r"C:\ProgramData\Visage\identities.dat"
     here = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(here, "identities.dev.dat")
 

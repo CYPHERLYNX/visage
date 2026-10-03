@@ -1,8 +1,8 @@
 <h1 align="center">
   <br>
-  <img src="assets/icon.png" alt="Mien" width="150">
+  <img src="assets/icon.png" alt="Visage" width="150">
   <br>
-  Mien
+  Visage
   <br>
 </h1>
 
@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/Python-3.10%2B-black.svg" alt="Python 3.10+">
 </p>
 
-Mien brings the FaceID-like experience of your iPhone to a Windows PC near you. Unlock your PC with a glance — no typing, no reaching for the keyboard. Everything runs on-device, so your face data and your Windows password never touch the internet. The UI lives on the lock screen as a sign-in tile with scanning, success, and failure states, and an optional challenge-response liveness check makes Mien hold up against replayed video, not just photos.
+Visage brings the FaceID-like experience of your iPhone to a Windows PC near you. Unlock your PC with a glance — no typing, no reaching for the keyboard. Everything runs on-device, so your face data and your Windows password never touch the internet. The UI lives on the lock screen as a sign-in tile with scanning, success, and failure states, and an optional challenge-response liveness check makes Visage hold up against replayed video, not just photos.
 
 
 <!-- Demo video placeholder: upload the demo to the releases page and link it here -->
@@ -26,21 +26,21 @@ Mien brings the FaceID-like experience of your iPhone to a Windows PC near you. 
 
 > [!WARNING]
 > ## Read before downloading
-> ## Mien is not as secure as Windows Hello
+> ## Visage is not as secure as Windows Hello
 >
 > Ordinary webcams don't come equipped with the depth sensors that make Windows Hello trustworthy and secure.
 > Windows Hello builds a 3D map of your face with infrared; a regular webcam sees a flat 2D image. That means:
 >
-> - Mien defeats, with reasonable confidence, a printed photo and a photo on a phone screen (heavy liveness
+> - Visage defeats, with reasonable confidence, a printed photo and a photo on a phone screen (heavy liveness
 >   detection — checks that verify you're a live person, not a picture — must be turned on)
-> - Mien defeats a replayed video of you ONLY when challenge-response liveness is turned on. Challenge-response
+> - Visage defeats a replayed video of you ONLY when challenge-response liveness is turned on. Challenge-response
 >   prompts you to turn your head in a random direction; a recording can't answer an unpredictable prompt in time
-> - Without challenge-response, Mien does not reliably defeat a video of you
-> - Windows has no API that lets a third-party app authorize a login, so Mien signs you in by submitting
+> - Without challenge-response, Visage does not reliably defeat a video of you
+> - Windows has no API that lets a third-party app authorize a login, so Visage signs you in by submitting
 >   your stored password through a Credential Provider tile — a Credential Provider is Windows's plug-in system
 >   for third-party sign-in options on the lock screen
 >
-> Mien is a convenience feature, not a security upgrade. Only continue if you accept the tradeoff.
+> Visage is a convenience feature, not a security upgrade. Only continue if you accept the tradeoff.
 
 ## Installation
 
@@ -49,10 +49,10 @@ Mien brings the FaceID-like experience of your iPhone to a Windows PC near you. 
 - A webcam (built-in or USB)
 - Python 3.10 or later
 
-<a href="https://github.com/CYPHERLYNX/mien/releases" target="_self"><img width="200" src="https://img.shields.io/badge/Download_for_Windows-black.svg" alt="Download for Windows" /></a>
+<a href="https://github.com/CYPHERLYNX/visage/releases" target="_self"><img width="200" src="https://img.shields.io/badge/Download_for_Windows-black.svg" alt="Download for Windows" /></a>
 
 Download the latest release, unzip it, and run `setup.ps1`. It installs the Python dependencies, builds the
-native components, and registers the Mien sign-in tile — one click, no manual steps.
+native components, and registers the Visage sign-in tile — one click, no manual steps.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
@@ -64,27 +64,27 @@ powershell -ExecutionPolicy Bypass -File .\setup.ps1
 | Permission | Why |
 |---|---|
 | **Camera** | To see your face. Frames are processed in memory and never written to disk. |
-| **Administrator** | To register the Mien sign-in tile (Credential Provider) with Windows at install time. Needed once during setup. |
+| **Administrator** | To register the Visage sign-in tile (Credential Provider) with Windows at install time. Needed once during setup. |
 | **DPAPI vault** | To keep your stored password encrypted at rest. DPAPI (Windows's Data Protection API) is Windows's built-in encryption service; it locks data so only this machine can decrypt it. |
 
 ## How it works
 
-1. Launch the app and follow the onboarding to enroll your face. Mien guides you through capturing your face, turning your head in nine
+1. Launch the app and follow the onboarding to enroll your face. Visage guides you through capturing your face, turning your head in nine
    directions. Each frame becomes a 512-number *embedding* — a mathematical fingerprint — and the
    image is thrown away.
 2. Enter your Windows password once. It's encrypted with DPAPI and only this machine can unlock it.
-3. When your PC locks or wakes from sleep, the Mien tile appears on the lock screen and starts searching for a face.
-4. If it's you — and the liveness checks agree you're a real person — Mien submits the
+3. When your PC locks or wakes from sleep, the Visage tile appears on the lock screen and starts searching for a face.
+4. If it's you — and the liveness checks agree you're a real person — Visage submits the
    password and you're in.
 
 ## Features
 
 | Feature | Description |
 |---|---|
-| **Face unlock** | Triggers on lock, on wake from sleep, or on selecting the Mien tile at the lock screen. Pick any combination. |
+| **Face unlock** | Triggers on lock, on wake from sleep, or on selecting the Visage tile at the lock screen. Pick any combination. |
 | **Multiple identities** | Enroll several people, or several versions of yourself — with glasses, a beard, different lighting. Toggle any of them off without deleting. |
 | **Liveness checks** | Watches for the motion and reflections that separate a real face from a photo. *Light* or *Heavy* strictness, or off. *Challenge-response* adds a head-turn prompt that a recording can't answer — the only mode that defeats video replay. |
-| **Lock-screen tile** | A sign-in tile that shows scanning, success, and failure states. Select it to retry — or turn the tile off entirely and Mien stays invisible. |
+| **Lock-screen tile** | A sign-in tile that shows scanning, success, and failure states. Select it to retry — or turn the tile off entirely and Visage stays invisible. |
 | **Camera selection** | Choose which camera to use — the built-in webcam, a USB camera, or any capture device Windows sees. |
 | **Auto-locking sessions** | The unlock authorization re-locks itself after an idle period you choose, so an unattended PC doesn't stay authorized forever. |
 | **Face Lab** | A hidden debug console to test face recognition and liveness detection with real values. See below. |
@@ -94,11 +94,11 @@ powershell -ExecutionPolicy Bypass -File .\setup.ps1
 
 # Privacy and Security
 
-Mien is designed to keep biometric data and credentials on-device.
+Visage is designed to keep biometric data and credentials on-device.
 
 ### Face data
 
-Mien never stores camera images. During enrollment, each captured face is converted into a **512-dimensional embedding** using an ArcFace-based model. The original frame is then discarded.
+Visage never stores camera images. During enrollment, each captured face is converted into a **512-dimensional embedding** using an ArcFace-based model. The original frame is then discarded.
 
 Embeddings are stored locally and encrypted with **AES-GCM** — an encryption mode that scrambles the data and detects any tampering with it.
 
@@ -110,9 +110,9 @@ The key and the password are only held in memory while an authorized unlock sess
 
 ### Unlock pipeline
 
-Mien won't submit your password simply because a face matches. An unlock requires all of the following:
+Visage won't submit your password simply because a face matches. An unlock requires all of the following:
 
-1. A valid Mien session is authorized.
+1. A valid Visage session is authorized.
 2. The PC is actually at the lock screen.
 3. An enabled identity matches above the configured similarity threshold — how closely the camera's view must match your enrollment to count as you.
 4. Liveness checks accept the detected face.
@@ -122,7 +122,7 @@ Face recognition and liveness detection run independently and must both succeed 
 
 ### Local by design
 
-Face recognition, face enrollment, and liveness detection run entirely on-device. Mien does not send face data, camera frames, or credentials to a server.
+Face recognition, face enrollment, and liveness detection run entirely on-device. Visage does not send face data, camera frames, or credentials to a server.
 
 
 ### How it tells a face from a photo — and a video
@@ -157,14 +157,14 @@ Honest answers, no hedging:
   and has real texture, so the passive cues can be fooled. **With challenge-response turned on:**
   defeated — the prompt is a random direction with a few seconds to comply, and a recording
   cannot turn the right way on demand.
-- **A stolen laptop (powered off).** Mien adds no protection here beyond what Windows already
+- **A stolen laptop (powered off).** Visage adds no protection here beyond what Windows already
   gives you, and you should assume a capable attacker can eventually extract the DPAPI machine
   key from the disk offline (this is a documented property of LocalMachine-scope DPAPI, not a
-  Mien bug). The vault file's ACLs stop other *users on the running machine*, not someone holding
+  Visage bug). The vault file's ACLs stop other *users on the running machine*, not someone holding
   the drive. If laptop theft is in your threat model, enable BitLocker — that is the defense that
   actually covers this case.
 
-What Mien never does: your face data and password never leave the machine, there is no account,
+What Visage never does: your face data and password never leave the machine, there is no account,
 no cloud, no telemetry. An attacker who never touches your laptop gets nothing, because there is
 nothing to get.
 
@@ -192,20 +192,20 @@ debug section should appear in the sidebar.
 
 1. Clone repository:
   ```bash
-   git clone https://github.com/CYPHERLYNX/mien.git
-   cd mien
+   git clone https://github.com/CYPHERLYNX/visage.git
+   cd visage
   ```
 2. Run the installer:
   ```powershell
    powershell -ExecutionPolicy Bypass -File .\setup.ps1
   ```
-3. Launch Mien from the Start menu and follow the onboarding to enroll your face.
+3. Launch Visage from the Start menu and follow the onboarding to enroll your face.
 
 
 
 ## Acknowledgements
 
-- **[jonnyoo/glance](https://github.com/jonnyoo/glance)** — the original idea. Mien is a Windows rebuild
+- **[jonnyoo/glance](https://github.com/jonnyoo/glance)** — the original idea. Visage is a Windows rebuild
   of Glance, and wouldn't exist without it.
 - **[InsightFace](https://github.com/deepinsight/insightface)** — the ArcFace model doing the
 recognition.

@@ -63,7 +63,7 @@ CONTINUITY_DISTANCE_TOLERANCE = 0.3
 def default_model_dir() -> str:
     """Models live under ProgramData on Windows, ./models for dev."""
     if os.name == "nt":
-        return r"C:\ProgramData\Mien\models"
+        return r"C:\ProgramData\Visage\models"
     here = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(here, "models")
 

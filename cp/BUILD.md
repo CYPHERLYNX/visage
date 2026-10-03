@@ -1,4 +1,4 @@
-BUILD.md - Building MienCP.dll
+BUILD.md - Building VisageCP.dll
 ================================
 
 ASCII-only document.
@@ -20,7 +20,7 @@ ASCII-only document.
 
 2. BUILD (Visual Studio IDE)
 ---------------------------
-1. Open MienCP.sln.
+1. Open VisageCP.sln.
 2. Set the configuration to Release and the platform to x64.
    (There is deliberately no Win32/ARM32 configuration: on 64-bit Windows
    a credential provider DLL must match the OS bitness. For ARM64 Windows,
@@ -34,19 +34,19 @@ ASCII-only document.
 From a "Developer Command Prompt for VS 2022" (or any prompt after
 running VsDevCmd.bat):
 
-    msbuild MienCP.sln /p:Configuration=Release /p:Platform=x64
+    msbuild VisageCP.sln /p:Configuration=Release /p:Platform=x64
 
-For a Debug build (enables MIEN_TRACE OutputDebugString logging):
+For a Debug build (enables VISAGE_TRACE OutputDebugString logging):
 
-    msbuild MienCP.sln /p:Configuration=Debug /p:Platform=x64
+    msbuild VisageCP.sln /p:Configuration=Debug /p:Platform=x64
 
 4. EXPECTED OUTPUTS
 -------------------
-- x64\Release\MienCP.dll   (ship this)
-- x64\Release\MienCP.pdb   (keep for debugging; do not ship)
+- x64\Release\VisageCP.dll   (ship this)
+- x64\Release\VisageCP.pdb   (keep for debugging; do not ship)
 
 Sanity checks on the built DLL:
-- `dumpbin /exports x64\Release\MienCP.dll` must list exactly:
+- `dumpbin /exports x64\Release\VisageCP.dll` must list exactly:
     DllGetClassObject, DllCanUnloadNow, DllRegisterServer, DllUnregisterServer
 - `dumpbin /headers` -> "machine (x64)".
 - The tile bitmap is embedded as a resource (IDB_TILEIMAGE).
@@ -54,7 +54,7 @@ Sanity checks on the built DLL:
 5. REGISTER
 -----------
 Copy these three files to a folder on the test machine (e.g.
-C:\ProgramData\Mien\cp\): MienCP.dll, register.ps1, unregister.ps1.
+C:\ProgramData\Visage\cp\): VisageCP.dll, register.ps1, unregister.ps1.
 Then, from an ELEVATED PowerShell in that folder:
 
     .\register.ps1
@@ -65,11 +65,11 @@ The script calls regsvr32, which runs DllRegisterServer. It writes exactly
 two keys:
 
     HKCR\CLSID\{794AAC04-6CB6-4C77-A828-27C20D0F820D}\InprocServer32
-        (default)      = full path of MienCP.dll
+        (default)      = full path of VisageCP.dll
         ThreadingModel = Apartment
     HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\
         Credential Providers\{794AAC04-6CB6-4C77-A828-27C20D0F820D}
-        (default)      = "Mien Face Unlock"
+        (default)      = "Visage Face Unlock"
 
 The second key is what makes LogonUI load the provider. No other registry
 state is touched.

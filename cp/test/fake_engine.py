@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""fake_engine.py - scripted stand-in for mien_engine.py.
+"""fake_engine.py - scripted stand-in for visage_engine.py.
 
-Implements the Mien named-pipe JSONL protocol so the credential provider can
+Implements the Visage named-pipe JSONL protocol so the credential provider can
 be tested without the real computer-vision engine.
 
 Usage (Windows):
@@ -15,14 +15,14 @@ Scenarios:
     slow_cancel scanning, then waits for {"cmd":"cancel"} -> cancelled
     challenge   scanning -> challenge (custom prompt) -> success
 
-The pipe name is \\\\.\\pipe\\MienAuth. One client at a time is enough for
+The pipe name is \\\\.\\pipe\\VisageAuth. One client at a time is enough for
 credential-provider testing.
 """
 import json
 import sys
 import time
 
-PIPE_NAME = r"\\.\pipe\MienAuth"
+PIPE_NAME = r"\\.\pipe\VisageAuth"
 
 
 def send(f, obj):

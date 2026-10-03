@@ -1,5 +1,5 @@
-# register.ps1 - Registers the Mien Face Unlock credential provider.
-# Run from an ELEVATED PowerShell, in the folder containing MienCP.dll:
+# register.ps1 - Registers the Visage Face Unlock credential provider.
+# Run from an ELEVATED PowerShell, in the folder containing VisageCP.dll:
 #   .\register.ps1
 # ASCII-only.
 
@@ -17,9 +17,9 @@ if (-not (Test-IsAdmin)) {
     exit 1
 }
 
-$dll = Join-Path $PSScriptRoot "MienCP.dll"
+$dll = Join-Path $PSScriptRoot "VisageCP.dll"
 if (-not (Test-Path $dll)) {
-    Write-Host "ERROR: MienCP.dll not found next to this script: $dll" -ForegroundColor Red
+    Write-Host "ERROR: VisageCP.dll not found next to this script: $dll" -ForegroundColor Red
     Write-Host "Build the Release|x64 configuration first (see BUILD.md)."
     exit 1
 }
@@ -37,7 +37,7 @@ if (-not (Test-Path $regsvr32)) {
     exit 1
 }
 
-Write-Host "Registering MienCP.dll ..."
+Write-Host "Registering VisageCP.dll ..."
 & $regsvr32 /s $dll
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR: regsvr32 failed with exit code $LASTEXITCODE" -ForegroundColor Red
@@ -61,6 +61,6 @@ if (-not $ok) {
 }
 
 Write-Host ""
-Write-Host "Mien Face Unlock is registered." -ForegroundColor Green
+Write-Host "Visage Face Unlock is registered." -ForegroundColor Green
 Write-Host "Lock the PC (Win+L) to see the new tile. Your password/PIN tiles are untouched."
 Write-Host "If anything looks wrong, run .\unregister.ps1 from an elevated prompt."

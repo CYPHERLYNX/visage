@@ -17,7 +17,7 @@ On non-Windows a dev-only fallback wraps the data key with an AES-GCM file
 key, with a LOUD warning on every use. It is NOT a substitute for DPAPI and
 must never ship.
 
-Trust model: the *engine* (mien_engine.py) never touches this module's
+Trust model: the *engine* (visage_engine.py) never touches this module's
 credential functions — only the credential-provider companion does. The pipe
 protocol has no message that can request credentials.
 
@@ -47,7 +47,7 @@ VAULT_VERSION = 1      # inner credential JSON schema version
 ENVELOPE_VERSION = 2   # outer envelope format version
 
 _DEV_WARNING = (
-    "MIEN DEV WARNING: vault key wrap uses the AES-GCM *file* fallback instead of "
+    "VISAGE DEV WARNING: vault key wrap uses the AES-GCM *file* fallback instead of "
     "Windows DPAPI. This is for development on non-Windows machines ONLY and must "
     "never ship. On Windows the data key is wrapped by DPAPI LocalMachine scope."
 )
@@ -239,7 +239,7 @@ def unseal(blob: bytes, hint_path: str) -> bytes:
 
 def default_vault_path() -> str:
     if os.name == "nt":
-        return r"C:\ProgramData\Mien\vault.dat"
+        return r"C:\ProgramData\Visage\vault.dat"
     here = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(here, "vault.dev.dat")
 

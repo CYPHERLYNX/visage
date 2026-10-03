@@ -5,7 +5,7 @@ else — no OpenCV, no camera, headless Linux — it raises a
 CameraUnavailableError carrying a plain-English explanation, and the UI
 shows that instead of a black rectangle.
 
-Set MIEN_DEMO_CAMERA=1 to use a synthetic camera (animated gradient with
+Set VISAGE_DEMO_CAMERA=1 to use a synthetic camera (animated gradient with
 a face-like blob) so the enrollment wizard can be exercised and
 screenshot-tested with no hardware at all. The preview is always labelled
 when it is simulated.
@@ -22,11 +22,11 @@ import numpy as np
 
 from .errors import CameraUnavailableError
 
-log = logging.getLogger("mien")
+log = logging.getLogger("visage")
 
 def demo_camera_enabled() -> bool:
     """Read live so the in-app fallback button can enable it at runtime."""
-    return os.environ.get("MIEN_DEMO_CAMERA") == "1"
+    return os.environ.get("VISAGE_DEMO_CAMERA") == "1"
 
 
 # Kept for compatibility; prefer demo_camera_enabled().
@@ -48,14 +48,14 @@ class Camera:
     def open(self) -> None:
         if demo_camera_enabled():
             self._demo = True
-            log.info("Using synthetic demo camera (MIEN_DEMO_CAMERA=1).")
+            log.info("Using synthetic demo camera (VISAGE_DEMO_CAMERA=1).")
             return
         try:
             import cv2  # lazy: OpenCV is a Windows runtime dependency
         except ImportError as exc:
             raise CameraUnavailableError(
                 "No camera support is installed.",
-                "On Windows, run: pip install -r requirements.txt, then restart Mien Manager.",
+                "On Windows, run: pip install -r requirements.txt, then restart Visage Manager.",
             ) from exc
         cap = cv2.VideoCapture(self.device_id, cv2.CAP_DSHOW if os.name == "nt" else cv2.CAP_ANY)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
@@ -63,7 +63,7 @@ class Camera:
         if not cap.isOpened():
             cap.release()
             raise CameraUnavailableError(
-                "Mien could not open the camera.",
+                "Visage could not open the camera.",
                 "Check that it is plugged in, not in use by another app, and that camera "
                 "access is allowed in Windows privacy settings (Settings > Privacy & security > Camera).",
             )

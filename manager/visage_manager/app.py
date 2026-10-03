@@ -1,4 +1,4 @@
-"""Mien Manager main window: sidebar navigation + stacked pages."""
+"""Visage Manager main window: sidebar navigation + stacked pages."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from .views.password_view import PasswordPage
 from .views.settings_view import SettingsPage
 from .widgets import LogoMark, Toast
 
-log = logging.getLogger("mien")
+log = logging.getLogger("visage")
 
 
 class SidebarButton(QPushButton):
@@ -51,7 +51,7 @@ class MainWindow(QMainWindow):
         self._face_lab_page: FaceLabPage | None = None
         self._face_lab_button: SidebarButton | None = None
 
-        self.setWindowTitle("Mien")
+        self.setWindowTitle("Visage")
         self.resize(1080, 720)
         self.setMinimumSize(900, 600)
         self.setStyleSheet(theme.STYLESHEET)
@@ -110,7 +110,7 @@ class MainWindow(QMainWindow):
 
         brand = QHBoxLayout()
         brand.addWidget(LogoMark(34))
-        name = QLabel("Mien")
+        name = QLabel("Visage")
         name.setStyleSheet(f"font-size: 18px; font-weight: 600; color: {theme.TEXT};")
         brand.addWidget(name)
         brand.addStretch(1)
@@ -178,7 +178,7 @@ class MainWindow(QMainWindow):
     # -- first run ----------------------------------------------------------------------
     def _run_first_run(self) -> None:
         wiz = FirstRunWizard(self.bridge, self.settings, parent=self)
-        wiz.finished_setup.connect(lambda: (self.navigate("home"), self._toast.show_message("Welcome to Mien.")))
+        wiz.finished_setup.connect(lambda: (self.navigate("home"), self._toast.show_message("Welcome to Visage.")))
         wiz.exec()
 
 
@@ -188,8 +188,8 @@ def main() -> int:
         format="%(asctime)s %(name)s %(levelname)s: %(message)s",
     )
     app = QApplication(sys.argv)
-    app.setApplicationName("Mien")
-    app.setOrganizationName("Mien")
+    app.setApplicationName("Visage")
+    app.setOrganizationName("Visage")
 
     bridge = EngineBridge()
     settings = SettingsStore()
