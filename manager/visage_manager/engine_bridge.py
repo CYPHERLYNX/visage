@@ -168,6 +168,7 @@ CUE_DEFINITIONS: tuple[tuple[str, str, str, str], ...] = (
 # Keys must match engine/enroll.py's FrameVerdict reason strings exactly;
 # the bridge looks them up verbatim and falls back to generic copy.
 VERDICT_COPY = {
+    # Legacy human-readable reasons (older engine builds).
     "No face visible": ("no_face", "Position your face in the frame"),
     "Just one face at a time, please": ("no_face", "Just one face at a time, please"),
     "Move a little closer": ("too_far", "Move a little closer"),
@@ -175,6 +176,20 @@ VERDICT_COPY = {
     "Hold still for a moment": ("hold_still", "Hold still"),
     "Please open your eyes": ("hold_still", "Open your eyes"),
     "Having trouble with this frame. Try again.": ("error", "That frame didn't work — hold still."),
+    # Machine-readable reasons from the Glance-faithful session.
+    "no_face": ("no_face", "Position your face in the frame"),
+    "multiple_faces": ("no_face", "Just one face at a time, please"),
+    "too_far": ("too_far", "Move a little closer"),
+    "hold_still": ("hold_still", "Hold still"),
+    "eyes_closed": ("hold_still", "Open your eyes"),
+    "settling": ("pose_progress", ""),
+    "awaiting_pose": ("pose_progress", ""),
+    "excessive_left": ("excessive_turn", "Too far left"),
+    "excessive_right": ("excessive_turn", "Too far right"),
+    "excessive_up": ("excessive_turn", "Too far up"),
+    "excessive_down": ("excessive_turn", "Too far down"),
+    "frame_error": ("error", "That frame didn't work — hold still."),
+    "complete": ("complete", "Face captured"),
 }
 
 
