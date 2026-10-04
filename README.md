@@ -47,17 +47,17 @@ Visage brings the FaceID-like experience of your iPhone to a Windows PC near you
 **Requirements:**
 - Windows 10 or 11, 64-bit
 - A webcam (built-in or USB)
-- Python 3.10 or later
+- Python 3.10 or later ([python.org](https://www.python.org/downloads/) — tick "Add python.exe to PATH")
+- Visual Studio 2022 with "Desktop development with C++" ([free Community edition](https://visualstudio.microsoft.com/downloads/)) — the installer builds the sign-in component with it
 
-<a href="https://github.com/CYPHERLYNX/visage/releases" target="_self"><img width="200" src="https://img.shields.io/badge/Download_for_Windows-black.svg" alt="Download for Windows" /></a>
+<a href="https://github.com/CYPHERLYNX/visage/releases/tag/v0.1" target="_self"><img width="200" src="https://img.shields.io/badge/Download_for_Windows-black.svg" alt="Download for Windows" /></a>
 
-Download the latest release, unzip it, and run `setup.ps1`. It installs the Python dependencies,
-builds the native sign-in component (needs Visual Studio 2022 with C++ — it tells you exactly
-what to install if it's missing), downloads the face models, and registers the Visage
-sign-in tile — one click, no manual steps.
+Download **Visage-Setup-v0.1.exe**, double-click it, approve the Administrator prompt, and follow the wizard. It installs Visage, downloads the face models (hash-verified), builds + registers the sign-in tile, and adds Visage Manager to your Start menu — then open Visage Manager to enroll your face.
+
+Prefer the manual route? The same steps live in `installer\setup.ps1`:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\setup.ps1
+powershell -ExecutionPolicy Bypass -File .\installer\setup.ps1
 ```
 
 
