@@ -236,32 +236,39 @@ try {
 
 # ------------------------------------------------- 3. Python dependencies
 
-Step-Header 3 9 "Installing Python dependencies (engine\requirements.txt)"
+Step-Header 3 9 "Installing Python dependencies"
 
-if (-not (Test-Path $script:ReqFile)) {
-    Record-Result "Python dependencies" "PENDING" `
-        "engine\requirements.txt not found - the engine is not built yet. Re-run setup.ps1 after it lands."
-} else {
-    Write-Host "Running: pip install -r engine\requirements.txt"
-    Write-Host "(this downloads packages from PyPI - it can take a few minutes)"
-    Write-Host ""
-    $code = Invoke-Python @("-m", "pip", "install", "--disable-pip-version-check", "-r", $script:ReqFile)
-    if ($code -eq 0) {
-        Record-Result "Python dependencies" "OK" "All packages from engine\requirements.txt installed."
-    } else {
-        Record-Result "Python dependencies" "FAILED" "pip exited with code $code."
+$reqFiles = @(
+    @{ Path = (Join-Path $script:EngineDir "requirements.txt");  Label = "engine" },
+    @{ Path = (Join-Path $script:ProjectRoot "manager\requirements.txt"); Label = "manager" }
+)
+$anyReqFound = $false
+foreach ($rf in $reqFiles) {
+    if (-not (Test-Path $rf.Path)) {
+        Write-Host "NOTE: $($rf.Path) not found - skipping $($rf.Label) packages."
+        continue
+    }
+    $anyReqFound = $true
+    Write-Host "Running: pip install -r $($rf.Path)"
+    $code = Invoke-Python @("-m", "pip", "install", "--disable-pip-version-check", "-r", $rf.Path)
+    if ($code -ne 0) {
+        Record-Result "Python dependencies ($($rf.Label))" "FAILED" "pip exited with code $code."
         Write-Host ""
         Write-Host "To fix this:"
         Write-Host "  1. Make sure this PC is connected to the internet."
         Write-Host "  2. Upgrade pip, then re-run setup (it picks up where it left off):"
         Write-Host "       python -m pip install --upgrade pip"
-        Write-Host "       .\setup.ps1"
-        Write-Host "  3. If it still fails, the red lines above name the package that"
-        Write-Host "     could not be installed - that is the one to investigate."
+        Write-Host "       .\installer\setup.ps1"
         Write-Host ""
         Write-Host "Setup stopped."
         exit 1
     }
+}
+if ($anyReqFound) {
+    Record-Result "Python dependencies" "OK" "Engine + manager packages installed."
+} else {
+    Record-Result "Python dependencies" "PENDING" `
+        "No requirements.txt found - the components are not built yet. Re-run setup.ps1 after they land."
 }
 
 # ------------------------------------------------- 4. face models (YuNet + ArcFace)
@@ -591,7 +598,7 @@ Write-Host ""
 Write-Host "What was installed:"
 Write-Host "  - Data folder:      C:\ProgramData\Visage\"
 Write-Host "                      (models\, identities\, config.json - SYSTEM + Administrators only)"
-Write-Host "  - Python packages:  from engine\requirements.txt"
+Write-Host "  - Python packages:  engine + manager (requirements.txt)"
 Write-Host "  - Face models:      YuNet + ArcFace (ONNX) in C:\ProgramData\Visage\models\"
 if (($script:Results | Where-Object { $_.Name -eq "Credential Provider" }).Status -eq "OK") {
     Write-Host "  - Sign-in tile:     Visage Credential Provider registered"
