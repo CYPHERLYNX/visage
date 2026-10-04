@@ -155,7 +155,7 @@ Write-Banner
 
 # ------------------------------------------------- 1. OS and Python checks
 
-Step-Header 1 8 "Checking Windows version and Python"
+Step-Header 1 9 "Checking Windows version and Python"
 
 # --- Windows 10/11 x64 ---
 try {
@@ -204,7 +204,7 @@ if ($pyInfo) {
 
 # ------------------------------------------- 2. data dirs + locked-down ACLs
 
-Step-Header 2 8 "Creating C:\ProgramData\Visage (models, identities)"
+Step-Header 2 9 "Creating C:\ProgramData\Visage (models, identities)"
 
 try {
     foreach ($d in @($script:DataDir, $script:ModelsDir, $script:IdentitiesDir)) {
@@ -236,7 +236,7 @@ try {
 
 # ------------------------------------------------- 3. Python dependencies
 
-Step-Header 3 8 "Installing Python dependencies (engine\requirements.txt)"
+Step-Header 3 9 "Installing Python dependencies (engine\requirements.txt)"
 
 if (-not (Test-Path $script:ReqFile)) {
     Record-Result "Python dependencies" "PENDING" `
@@ -266,7 +266,7 @@ if (-not (Test-Path $script:ReqFile)) {
 
 # ------------------------------------------------- 4. face models (YuNet + ArcFace)
 
-Step-Header 4 8 "Downloading face models (YuNet + ArcFace ONNX)"
+Step-Header 4 9 "Downloading face models (YuNet + ArcFace ONNX)"
 
 if (-not (Test-Path $script:FetchModels)) {
     Record-Result "Face models" "PENDING" `
@@ -296,7 +296,7 @@ if (-not (Test-Path $script:FetchModels)) {
 
 # ------------------------------------------------- 5. engine package deploy
 
-Step-Header 5 8 "Deploying the engine (runs as SYSTEM)"
+Step-Header 5 9 "Deploying the engine (runs as SYSTEM)"
 
 $script:EngineTargetDir = Join-Path $script:DataDir "engine"
 # Runtime modules only: the SYSTEM-spawned pipe server and its imports.
@@ -362,7 +362,7 @@ try {
 
 # ------------------------------------------------- 6. default config.json
 
-Step-Header 6 8 "Writing default config"
+Step-Header 6 9 "Writing default config"
 
 try {
     $needsWrite = $true
@@ -404,7 +404,7 @@ try {
 
 # ------------------------------------------------- 7. Credential Provider
 
-Step-Header 7 8 "Building + registering the Visage sign-in tile"
+Step-Header 7 9 "Building + registering the Visage sign-in tile"
 
 $script:SlnPath = Join-Path $script:CpDir "VisageCP.sln"
 $script:DllPath = Join-Path $script:CpDir "VisageCP.dll"
@@ -501,7 +501,7 @@ if (-not $cpBuilt) {
 
 # ------------------------------------------------- 8. verify
 
-Step-Header 8 8 "Verifying the install"
+Step-Header 8 9 "Verifying the install"
 
 if (Test-Path $script:SelfTest) {
     Write-Host "Running engine self-test (pipe protocol): python engine\selftest.py"
@@ -531,6 +531,39 @@ if (Test-Path $script:SelfTest) {
     Write-Host "     (see the 3 steps below) - the tile does nothing until then."
     Write-Host "  4. If the camera light never comes on, close any other app"
     Write-Host "     using the camera (Zoom, Teams, browser tabs) and try again."
+}
+
+# ------------------------------------------------- shortcut
+
+Step-Header 9 9 "Creating the Start menu shortcut"
+
+try {
+    $startMenu = Join-Path ([Environment]::GetFolderPath("CommonStartMenu")) "Programs"
+    $lnkPath = Join-Path $startMenu "Visage Manager.lnk"
+    $runPy = Join-Path $script:ProjectRoot "manager\run.py"
+    $iconPath = Join-Path $script:ProjectRoot "assets\icon.ico"
+
+    # Resolve the real python exe (pythonw = no console window for the GUI).
+    $pyExe = (Get-Command $script:PythonCmd[0] -ErrorAction Stop).Source
+    $pyDir = Split-Path -Parent $pyExe
+    $pyW = Join-Path $pyDir "pythonw.exe"
+    if (-not (Test-Path $pyW)) { $pyW = $pyExe }
+
+    $shell = New-Object -ComObject WScript.Shell
+    $lnk = $shell.CreateShortcut($lnkPath)
+    $lnk.TargetPath = $pyW
+    $lnk.Arguments = "`"$runPy`""
+    $lnk.WorkingDirectory = $script:ProjectRoot
+    if (Test-Path $iconPath) { $lnk.IconLocation = $iconPath }
+    $lnk.Description = "Visage Manager - face enrollment and settings"
+    $lnk.Save()
+    [System.Runtime.InteropServices.Marshal]::ReleaseComObject($shell) | Out-Null
+    Record-Result "Start menu shortcut" "OK" "Visage Manager.lnk created."
+} catch {
+    Record-Result "Start menu shortcut" "PENDING" `
+        "Could not create the Start menu shortcut: $($_.Exception.Message)"
+    Write-Host "       You can still launch the manager by hand:"
+    Write-Host "         python `"$((Join-Path $script:ProjectRoot 'manager\run.py'))`""
 }
 
 # ------------------------------------------------- summary

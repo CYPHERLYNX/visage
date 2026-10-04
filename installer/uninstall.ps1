@@ -92,6 +92,24 @@ if (Test-Path $script:UnregisterCp) {
     Write-Host "       (Either the tile was never registered, or cp\ was removed.)"
 }
 
+# ------------------------------------------------- 1b. Start menu shortcut
+
+Write-Host ""
+Write-Host "Removing the Start menu shortcut"
+Write-Host ("-" * 64)
+$lnkPath = Join-Path ([Environment]::GetFolderPath("CommonStartMenu")) "Programs\Visage Manager.lnk"
+if (Test-Path $lnkPath) {
+    try {
+        Remove-Item -Force -Path $lnkPath -ErrorAction Stop
+        Write-Host "[ OK ] Start menu shortcut removed."
+    } catch {
+        Write-Host "[FAILED] Could not remove the Start menu shortcut: $($_.Exception.Message)"
+        $failed = $true
+    }
+} else {
+    Write-Host "[ OK ] No Start menu shortcut found."
+}
+
 # ------------------------------------------------- 2. stop running processes
 
 Write-Host ""
