@@ -254,3 +254,33 @@ def test_baseline_self_calibrates():
     up_lm[2, 1] -= 14
     v, t = capture(s, t, up_lm)
     assert v.accepted and v.direction == "up", v.reason
+
+
+# -- live head-turn indicator ---------------------------------------------------
+
+def test_head_turn_none_for_center_and_no_face():
+    s = session()
+    t = 0.0
+    for _ in range(2):
+        v, t = capture(s, t, base_landmarks())
+    # Target is now "left"; feed a matching turn and check the indicator.
+    v = s.process_frame(make_face(), [det(landmarks=base_landmarks(nose_dx=10))], now=t)
+    ht = s.head_turn()
+    assert ht is not None
+    angle, progress = ht
+    # User's left -> compass ~270.
+    assert 240 < angle < 300, angle
+    assert 0.3 < progress <= 1.0
+    # No face -> None.
+    s.process_frame(make_face(), [], now=t + 1.0)
+    assert s.head_turn() is None
+
+
+def test_head_turn_deadzone():
+    s = session()
+    t = 0.0
+    for _ in range(2):
+        v, t = capture(s, t, base_landmarks())
+    # Tiny turn -> below the 0.15 deadzone -> None.
+    s.process_frame(make_face(), [det(landmarks=base_landmarks(nose_dx=1))], now=t)
+    assert s.head_turn() is None

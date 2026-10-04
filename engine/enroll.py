@@ -26,6 +26,7 @@ camera code lives here, so it is fully testable with synthetic frames.
 
 from __future__ import annotations
 
+import math
 import time
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
@@ -238,6 +239,10 @@ class EnrollmentSession:
         self._pose_started_at: Optional[float] = None
         self._hold_started_at: Optional[float] = None
         self._capture_ready_at: Optional[float] = None
+        # Last frame's (yaw, pitch) ratios, or None when the last frame had
+        # no usable face (no face / too far / excessive turn). Drives the
+        # ring's live head-turn indicator (Glance's `headTurn`).
+        self._last_ratios: Optional[Tuple[float, float]] = None
 
     # -- progress ---------------------------------------------------------
 
@@ -258,6 +263,33 @@ class EnrollmentSession:
     def next_prompt(self) -> str:
         d = self.next_direction()
         return DIRECTION_PROMPTS[d] if d else "You're all set"
+
+    def head_turn(self) -> Optional[Tuple[float, float]]:
+        """Live head-turn indicator, mirroring Glance's `headTurn`.
+
+        Returns (compass_angle, progress): compass 0 = up, clockwise;
+        progress 0..1 toward the current target's match threshold.
+        None when there is nothing to point at: complete, no usable face
+        on the last frame, or the target is center (which has no sector).
+        """
+        target = self.next_direction()
+        if target is None or target == "center":
+            return None
+        if self._last_ratios is None:
+            return None
+        base = self._baseline()
+        if base is None:
+            return None
+        yaw_rel = self._last_ratios[0] - base[0]
+        pitch_rel = self._last_ratios[1] - base[1]
+        # Glance: x = -yaw/threshold, y = -pitch/threshold, angle = atan2(x, y).
+        x = -yaw_rel / _YAW_INNER
+        y = -pitch_rel / _PITCH_INNER
+        magnitude = math.sqrt(x * x + y * y)
+        if magnitude < 0.15:  # deadzone: mostly sensor noise below this
+            return None
+        angle = (math.degrees(math.atan2(x, y)) + 360.0) % 360.0
+        return angle, min(magnitude, 1.0)
 
     # -- internals --------------------------------------------------------
 
@@ -312,19 +344,23 @@ class EnrollmentSession:
 
         if not detections:
             self._reset_match()
+            self._last_ratios = None
             return FrameVerdict(False, reason="no_face")
         det = largest_face(detections)
         if len(detections) > q.max_faces:
             self._reset_match()
+            self._last_ratios = None
             return FrameVerdict(False, reason="multiple_faces")
 
         fh, fw = frame_bgr.shape[:2]
         x, y, w, h = det.box
         if w < q.min_face_pixels or h < q.min_face_pixels:
             self._reset_match()
+            self._last_ratios = None
             return FrameVerdict(False, reason="too_far")
         if (w * h) / float(fw * fh) < q.min_face_fraction:
             self._reset_match()
+            self._last_ratios = None
             return FrameVerdict(False, reason="too_far")
 
         x0, y0 = max(0, x), max(0, y)
@@ -359,7 +395,11 @@ class EnrollmentSession:
             over = _excessive_turn(yaw - base[0], pitch - base[1])
             if over is not None:
                 self._reset_match()
+                self._last_ratios = None
                 return FrameVerdict(False, reason="excessive_" + over)
+
+        # Usable face: publish for the live head-turn indicator.
+        self._last_ratios = (yaw, pitch)
 
         widened = (t - self._pose_started_at) > _STALL_TIMEOUT_S
         if not self._pose_matches(target, yaw, pitch, widened):

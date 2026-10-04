@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PyQt6.QtCore import QEasingCurve, QPoint, QPropertyAnimation, QRect, Qt, QTimer, pyqtProperty, pyqtSignal
+from PyQt6.QtCore import QEasingCurve, QPoint, QPointF, QPropertyAnimation, QRect, Qt, QTimer, pyqtProperty, pyqtSignal
 from PyQt6.QtGui import QColor, QPainter, QPainterPath, QPen
 from PyQt6.QtWidgets import (
     QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel, QPushButton,
@@ -309,21 +309,28 @@ class CueBar(QWidget):
 
 
 class AnimatedCheckmark(QWidget):
-    """Draws itself with a trim animation, like Glance's AnimatedCheckmark:
-    ease-out cubic over ~0.6s, round caps."""
+    """Draws itself with a trim animation, like Glance's AnimatedCheckmark.
 
-    def __init__(self, diameter: int = 84, color: str | None = None, parent: QWidget | None = None):
+    Glance spec: 70x59 box, 8px round-cap stroke, trim 0->1 over 0.28s with
+    timing curve (0.65, 0, 0.35, 1.0). Path in unit space:
+    (0.16,0.52) -> (0.40,0.78) -> (0.86,0.22).
+    """
+
+    def __init__(self, width: int = 70, height: int = 59,
+                 color: str | None = None, parent: QWidget | None = None):
         super().__init__(parent)
-        self.setFixedSize(diameter, diameter)
-        self._diameter = diameter
+        self.setFixedSize(width, height)
+        self._w, self._h = width, height
         self._color = QColor(color or theme.ACCENT)
         self._progress = 0.0
 
     def play(self) -> None:
         self._progress = 0.0
         anim = QPropertyAnimation(self, b"drawProgress", self)
-        anim.setDuration(600)
-        anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        anim.setDuration(280)
+        bezier = QEasingCurve(QEasingCurve.Type.BezierSpline)
+        bezier.addCubicBezierSegment(QPointF(0.65, 0.0), QPointF(0.35, 1.0), QPointF(1.0, 1.0))
+        anim.setEasingCurve(bezier)
         anim.setStartValue(0.0)
         anim.setEndValue(1.0)
         anim.start(QPropertyAnimation.DeletionPolicy.DeleteWhenStopped)
@@ -341,14 +348,14 @@ class AnimatedCheckmark(QWidget):
         import math
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        d = self._diameter
+        w, h = self._w, self._h
         # checkmark path in unit space: (0.16,0.52) -> (0.40,0.78) -> (0.86,0.22)
-        pts = [(0.16 * d, 0.52 * d), (0.40 * d, 0.78 * d), (0.86 * d, 0.22 * d)]
+        pts = [(0.16 * w, 0.52 * h), (0.40 * w, 0.78 * h), (0.86 * w, 0.22 * h)]
         seg1 = math.dist(pts[0], pts[1])
         seg2 = math.dist(pts[1], pts[2])
         total = seg1 + seg2
         target = self._progress * total
-        pen = QPen(self._color, max(4, d * 0.09))
+        pen = QPen(self._color, 8)
         pen.setCapStyle(Qt.PenCapStyle.RoundCap)
         pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
         p.setPen(pen)

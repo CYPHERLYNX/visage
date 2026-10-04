@@ -91,6 +91,8 @@ class FrameOutcome:
     captured_for_pose: int = 0
     overall_progress: float = 0.0  # 0..1 across all poses
     detail: str = ""           # extra context (never shown raw)
+    head_turn_angle: Optional[float] = None   # compass deg, 0=up clockwise
+    head_turn_progress: float = 0.0          # 0..1 toward the target pose
 
 
 @dataclass
@@ -665,6 +667,15 @@ class _RealEnrollmentSession(BaseEnrollmentSession):
         target_pose = POSE_BY_ENGINE_KEY.get(target_engine or "", ENROLLMENT_POSES[0])
         pose_index = ENROLLMENT_POSES.index(target_pose)
         captured_here = self._captured_for(target_engine) if target_engine else 0
+        # Live head-turn indicator (Glance's `headTurn`); None when nothing
+        # to point at.
+        ht_angle, ht_progress = None, 0.0
+        try:
+            ht = self._session.head_turn()
+            if ht is not None:
+                ht_angle, ht_progress = float(ht[0]), float(ht[1])
+        except Exception:
+            pass
 
         if not getattr(verdict, "accepted", False):
             reason = str(getattr(verdict, "reason", "") or "")
@@ -673,7 +684,9 @@ class _RealEnrollmentSession(BaseEnrollmentSession):
                 log.info("unmapped verdict reason: %r", reason[:80])
             return FrameOutcome(kind=kind, message=message, pose_index=pose_index,
                                 captured_for_pose=captured_here,
-                                overall_progress=min(got / total, 1.0))
+                                overall_progress=min(got / total, 1.0),
+                                head_turn_angle=ht_angle,
+                                head_turn_progress=ht_progress)
 
         # Accepted: validate the embedding before it goes anywhere.
         direction = str(getattr(verdict, "direction", "") or "")
