@@ -145,6 +145,10 @@ def fetch_model(name: str, model_dir: str) -> str:
         print("%s exists but the hash does not match - re-downloading." % name)
         os.remove(dest)
 
+    # If the model dir path exists as a *file* (not a directory), remove it;
+    # makedirs(exist_ok=True) would otherwise fail with FileExistsError.
+    if os.path.isfile(model_dir):
+        os.remove(model_dir)
     os.makedirs(model_dir, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="visage_models_") as tmp:
         tmp_file = os.path.join(tmp, name + ".download")
