@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout, QWidget,
 )
 
-from . import theme
+from .. import theme
 
 
 class Card(QFrame):
