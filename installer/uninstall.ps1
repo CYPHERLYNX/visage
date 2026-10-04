@@ -1,4 +1,7 @@
 #Requires -Version 5.1
+param(
+    [switch]$Force   # skip interactive confirmations (used by Visage-Setup.exe's uninstaller)
+)
 <#
 .SYNOPSIS
     Visage Uninstall - cleanly removes face unlock from Windows.
@@ -153,7 +156,10 @@ if (-not (Test-Path $script:DataDir)) {
     Write-Host "    - settings (config.json)"
     Write-Host "    - downloaded face models (models\)"
     Write-Host ""
-    $answer = Read-Host 'Type YES (all caps) to confirm deletion'
+    $answer = "YES"
+    if (-not $Force) {
+        $answer = Read-Host 'Type YES (all caps) to confirm deletion'
+    }
     if ($answer -ne "YES") {
         Write-Host ""
         Write-Host "Uninstall cancelled. Nothing was deleted."
@@ -194,6 +200,11 @@ if (Test-Path $regKey) {
 Write-Host ""
 Write-Host "[4/4] Python packages (optional)"
 Write-Host ("-" * 64)
+$rm = "n"
+if ($Force) {
+    # Wizard uninstaller: keep the Python packages (shared with other software).
+    Write-Host "[SKIP] Keeping the Python packages (uninstaller was run with -Force)."
+} else {
 $rm = Read-Host "Also remove the Python packages Visage installed? (y/N)"
 if ($rm -match '^[Yy]') {
     if (-not (Test-Path $script:ReqFile)) {
@@ -222,6 +233,7 @@ if ($rm -match '^[Yy]') {
 } else {
     Write-Host "[SKIP] Keeping the Python packages."
 }
+}  # end of: if ($Force) { skip } else { ask }
 
 # ------------------------------------------------- done
 
