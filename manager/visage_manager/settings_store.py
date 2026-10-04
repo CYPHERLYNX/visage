@@ -23,6 +23,15 @@ _DEFAULTS = {
     "face_unlock_enabled": True,
     "onboarding_done": False,
     "face_lab_unlocked": False,
+    "launch_at_login": False,
+    "show_in_tray": True,
+    "unlock_triggers": ["on_wake", "on_lock"],
+    "selected_display": "main",
+    "retry_on_hover": True,
+    "auto_retry_once": False,
+    "face_detection_seconds": 5,
+    "show_unlock_animation": True,
+    "unlock_animation_style": "minimal",  # minimal | original
 }
 
 

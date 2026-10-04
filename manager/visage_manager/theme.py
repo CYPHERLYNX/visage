@@ -18,12 +18,23 @@ TEXT = "#F5F5F7"          # primary
 TEXT_SECONDARY = "#A1A1A6"
 TEXT_TERTIARY = "#6E6E73"
 
-# --- Accent & status ---
-ACCENT = "#0A84FF"        # Apple system blue
-ACCENT_DIM = "#0A84FF33"
+# --- Accent & status (Glance design tokens) ---
+ACCENT = "#3499FF"        # Glance accent blue
+ACCENT_BRIGHT = "#7FC2FF"
+ACCENT_PALE = "#CFE7FF"
+ACCENT_DEEP = "#1F6BD1"
+ACCENT_DIM = "#3499FF33"
 SUCCESS = "#30D158"
 WARNING = "#FF9F0A"
 DANGER = "#FF453A"
+# Glance settings tokens (dark)
+ROW_FILL = "rgba(255,255,255,0.08)"
+ROW_BORDER = "rgba(204,204,204,0.12)"
+NEUTRAL_FILL = "rgba(255,255,255,0.14)"
+QUALITY_POOR = "#FF5454"
+QUALITY_FAIR = "#FFBE54"
+QUALITY_GOOD = "#85FF77"
+QUALITY_UNRATED = "rgba(255,255,255,0.22)"
 
 # --- Spacing (px) ---
 PAD_PAGE = 32

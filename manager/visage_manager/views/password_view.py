@@ -25,21 +25,20 @@ class PasswordPage(QWidget):
         self.bridge = bridge
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(theme.PAD_PAGE, 32, theme.PAD_PAGE, theme.PAD_PAGE)
-        layout.setSpacing(theme.GAP)
+        layout.setContentsMargins(16, 8, 16, 16)
+        layout.setSpacing(12)
 
-        title = QLabel("Windows password")
-        title.setObjectName("pageTitle")
+        title = QLabel("Password")
+        title.setStyleSheet(f"font-size: 13px; font-weight: 600; color: {theme.TEXT};")
         layout.addWidget(title)
         sub = QLabel(
             "Your password is required to unlock your PC. It is encrypted and securely "
             "stored on your device. Visage works entirely offline, so your password never "
             "leaves your PC."
         )
-        sub.setObjectName("pageSubtitle")
+        sub.setObjectName("hint")
         sub.setWordWrap(True)
         layout.addWidget(sub)
-        layout.addSpacing(8)
 
         self._card = Card()
         layout.addWidget(self._card)

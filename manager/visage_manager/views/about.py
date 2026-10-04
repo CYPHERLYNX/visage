@@ -30,8 +30,8 @@ class AboutPage(QWidget):
         self._unlocked_announced = False
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(theme.PAD_PAGE, 32, theme.PAD_PAGE, theme.PAD_PAGE)
-        layout.setSpacing(theme.GAP)
+        layout.setContentsMargins(16, 8, 16, 16)
+        layout.setSpacing(12)
 
         card = Card()
         lay = card.layout()
