@@ -483,7 +483,7 @@ def serve_tcp(authenticator: Authenticator, port: int = DEFAULT_TCP_PORT,
         raise SystemExit(
             "visage-engine: couldn't start on 127.0.0.1:%d (%s). "
             "Another copy may already be running." % (port, exc)
-        )
+        ) from exc
     srv.listen(4)
     _log("listening on 127.0.0.1:%d (TCP fallback for non-Windows; localhost only)" % port)
     while True:

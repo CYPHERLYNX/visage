@@ -131,7 +131,7 @@ def _extract_member(zip_path: str, member: str, dest: str,
                             "(%.0f MB cap); refusing to extract." % max_mb)
                     fh.write(chunk)
     except zipfile.BadZipFile as exc:
-        raise FetchError("The downloaded file is not a valid zip archive: %s" % exc)
+        raise FetchError("The downloaded file is not a valid zip archive: %s" % exc) from exc
 
 
 def fetch_model(name: str, model_dir: str) -> str:
@@ -185,7 +185,7 @@ def fetch_all(model_dir: Optional[str] = None) -> List[str]:
             raise FetchError(
                 "Couldn't write to %s (%s). Try running as administrator, then try again."
                 % (model_dir, exc)
-            )
+            ) from exc
     print("All models ready.")
     return paths
 

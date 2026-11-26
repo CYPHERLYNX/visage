@@ -173,11 +173,11 @@ def decode_line(line: bytes) -> Dict[str, Any]:
     try:
         text = line.decode("utf-8")
     except UnicodeDecodeError as exc:
-        raise ProtocolError("protocol line is not valid UTF-8: %s" % exc)
+        raise ProtocolError("protocol line is not valid UTF-8: %s" % exc) from exc
     try:
         obj = json.loads(text)
     except json.JSONDecodeError as exc:
-        raise ProtocolError("protocol line is not valid JSON: %s" % exc)
+        raise ProtocolError("protocol line is not valid JSON: %s" % exc) from exc
     if not isinstance(obj, dict):
         raise ProtocolError("protocol message must be a JSON object")
     return obj
