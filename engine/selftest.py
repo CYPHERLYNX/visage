@@ -49,7 +49,7 @@ def expect_protocol_error(name, fn, *args):
         return
     except Exception as exc:  # noqa: BLE001 - any other error is a failure too
         print("FAIL: %s (wrong exception: %r)" % (name, exc))
-        raise Failed(name)
+        raise Failed(name) from exc
     print("FAIL: " + name + " (no error raised)")
     raise Failed(name)
 
