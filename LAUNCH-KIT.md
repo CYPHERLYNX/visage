@@ -2,7 +2,7 @@
 
 > The repo is currently PRIVATE. Use this copy only if/when you make it public.
 > Never post from bot accounts, never fake engagement. All claims below are
-> honest and match the README. Repo: https://github.com/CYPHERLYNX/visage
+> honest and match the README. Repo: https://github.com/X0D4N/visage
 
 ---
 

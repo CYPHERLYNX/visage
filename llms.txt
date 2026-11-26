@@ -27,7 +27,7 @@
 ## Install / test
 - Install (Windows): download release zip, then
   `powershell -ExecutionPolicy Bypass -File .\setup.ps1`
-- Build from source: `git clone https://github.com/CYPHERLYNX/visage.git`,
+- Build from source: `git clone https://github.com/X0D4N/visage.git`,
   then run `.\setup.ps1` as above.
 - Test: run the engine test suite from `engine/` (see that directory's docs for the
   exact command), and verify unlock end-to-end on the lock screen with Face Lab open.

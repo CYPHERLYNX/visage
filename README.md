@@ -50,7 +50,7 @@ Visage brings the FaceID-like experience of your iPhone to a Windows PC near you
 - Python 3.10 or later ([python.org](https://www.python.org/downloads/) — tick "Add python.exe to PATH")
 - Visual Studio 2022 with "Desktop development with C++" ([free Community edition](https://visualstudio.microsoft.com/downloads/)) — the installer builds the sign-in component with it
 
-<a href="https://github.com/CYPHERLYNX/visage/releases/tag/v0.1" target="_self"><img width="200" src="https://img.shields.io/badge/Download_for_Windows-black.svg" alt="Download for Windows" /></a>
+<a href="https://github.com/X0D4N/visage/releases/tag/v0.1" target="_self"><img width="200" src="https://img.shields.io/badge/Download_for_Windows-black.svg" alt="Download for Windows" /></a>
 
 Download **Visage-Setup-v0.1.exe**, double-click it, approve the Administrator prompt, and follow the wizard. It installs Visage, downloads the face models (hash-verified), builds + registers the sign-in tile, and adds Visage Manager to your Start menu — then open Visage Manager to enroll your face.
 
@@ -194,7 +194,7 @@ debug section should appear in the sidebar.
 
 1. Clone repository:
   ```bash
-   git clone https://github.com/CYPHERLYNX/visage.git
+   git clone https://github.com/X0D4N/visage.git
    cd visage
   ```
 2. Run the installer:

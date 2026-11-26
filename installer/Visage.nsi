@@ -31,7 +31,7 @@ RequestExecutionLevel admin
 VIProductVersion "0.1.0.0"
 VIAddVersionKey "ProductName" "Visage"
 VIAddVersionKey "FileDescription" "Visage Setup - face unlock for Windows"
-VIAddVersionKey "CompanyName" "CYPHERLYNX"
+VIAddVersionKey "CompanyName" "X0D4N"
 VIAddVersionKey "FileVersion" "0.1.0"
 VIAddVersionKey "LegalCopyright" "(c) 2026 CYPHERLYNX"
 
@@ -93,7 +93,7 @@ Section "Visage" SEC_MAIN
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Visage" \
     "DisplayVersion" "0.1.0"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Visage" \
-    "Publisher" "CYPHERLYNX"
+    "Publisher" "X0D4N"
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Visage" \
     "NoModify" 1
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Visage" \
