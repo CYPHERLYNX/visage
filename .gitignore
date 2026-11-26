@@ -39,3 +39,6 @@ desktop.ini
 *.swp
 *~
 *.zip
+
+# dev-only generated key files
+*.devkey
