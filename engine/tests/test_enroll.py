@@ -10,7 +10,6 @@ from engine.enroll import (
     DIRECTIONS,
     EnrollmentSession,
     QualityConfig,
-    _POSE_BANDS,
     face_sharpness,
     head_pose_ratios,
 )
@@ -190,7 +189,7 @@ def test_wrong_direction_does_not_capture():
     t = 0.0
     # Complete center first (baseline).
     for _ in range(2):
-        v, t = capture(s, t, base_landmarks())
+        _v, t = capture(s, t, base_landmarks())
     assert s.next_direction() == "left"
     # Feed a RIGHT turn (nose toward viewer's left) for a while: no capture.
     for _ in range(6):
@@ -207,7 +206,7 @@ def test_excessive_turn_rejected_with_direction():
     s = session()
     t = 0.0
     for _ in range(2):
-        v, t = capture(s, t, base_landmarks())
+        _v, t = capture(s, t, base_landmarks())
     assert s.next_direction() == "left"
     v = s.process_frame(make_face(), [det(landmarks=base_landmarks(nose_dx=45))], now=t)
     assert not v.accepted and v.reason == "excessive_left"
@@ -218,7 +217,7 @@ def test_stall_widens_bands():
     s = session()
     t = 0.0
     for _ in range(2):
-        v, t = capture(s, t, base_landmarks())
+        _v, t = capture(s, t, base_landmarks())
     assert s.next_direction() == "left"
     # nose_dx=8 -> yaw_rel ~= 0.114: below the 0.14 inner threshold...
     lm = base_landmarks(nose_dx=8)
@@ -262,9 +261,9 @@ def test_head_turn_none_for_center_and_no_face():
     s = session()
     t = 0.0
     for _ in range(2):
-        v, t = capture(s, t, base_landmarks())
+        _v, t = capture(s, t, base_landmarks())
     # Target is now "left"; feed a matching turn and check the indicator.
-    v = s.process_frame(make_face(), [det(landmarks=base_landmarks(nose_dx=10))], now=t)
+    s.process_frame(make_face(), [det(landmarks=base_landmarks(nose_dx=10))], now=t)
     ht = s.head_turn()
     assert ht is not None
     angle, progress = ht
@@ -280,7 +279,7 @@ def test_head_turn_deadzone():
     s = session()
     t = 0.0
     for _ in range(2):
-        v, t = capture(s, t, base_landmarks())
+        _v, t = capture(s, t, base_landmarks())
     # Tiny turn -> below the 0.15 deadzone -> None.
     s.process_frame(make_face(), [det(landmarks=base_landmarks(nose_dx=1))], now=t)
     assert s.head_turn() is None

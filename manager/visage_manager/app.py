@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import QApplication
 
 from . import theme
 from .engine_bridge import EngineBridge
-from .errors import log_exception
 from .settings_store import SettingsStore
 from .views.about import AboutPage
 from .views.camera_page import CameraPage

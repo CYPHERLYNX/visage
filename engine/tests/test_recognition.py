@@ -6,7 +6,6 @@ with a clear message when the models are absent (run fetch_models.py).
 
 import os
 
-import cv2
 import numpy as np
 import pytest
 

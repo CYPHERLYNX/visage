@@ -30,13 +30,13 @@ from datetime import datetime
 from PyQt6.QtCore import QObject, Qt, QThread, QTimer, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QColor, QImage, QPainter, QPen, QPixmap
 from PyQt6.QtWidgets import (
-    QCheckBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea,
+    QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea,
     QSlider, QTextEdit, QVBoxLayout, QWidget,
 )
 
 from .. import theme
 from ..camera import Camera
-from ..engine_bridge import CUE_DEFINITIONS, EngineBridge
+from ..engine_bridge import EngineBridge
 from ..errors import EngineUnavailableError, VisageError, humanize, log_exception
 from ..widgets import Card, CueBar
 

@@ -6,11 +6,11 @@ Animation, Lock screen. Copy follows docs/glance-specs/unlock-settings.md.
 
 from __future__ import annotations
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QColor, QPainter, QPainterPath, QPen
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QColor, QPainter, QPen
 from PyQt6.QtWidgets import (
     QComboBox, QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel,
-    QPushButton, QScrollArea, QSizePolicy, QSlider, QStackedWidget,
+    QPushButton, QScrollArea, QSlider, QStackedWidget,
     QVBoxLayout, QWidget,
 )
 

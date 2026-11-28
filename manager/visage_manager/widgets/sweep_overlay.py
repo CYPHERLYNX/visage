@@ -405,7 +405,7 @@ class SweepOverlay(QWidget):
         assets = self._cache.get(key)
         if assets is None:
             pixmaps: list[QPixmap] | None = None
-            for (d2, w2, h2), (px2, _g2) in self._cache.items():
+            for (_d2, w2, h2), (px2, _g2) in self._cache.items():
                 if w2 == w and h2 == h:
                     pixmaps = px2  # appearance is direction-independent
                     break
@@ -473,7 +473,7 @@ class SweepOverlay(QWidget):
             if play_op <= 0.001:
                 continue
             elapsed = now - pl.t0
-            for pix, g in zip(pl.pixmaps, pl.geoms):
+            for pix, g in zip(pl.pixmaps, pl.geoms, strict=True):
                 local = elapsed - g.delay
                 if local < 0.0:
                     continue
