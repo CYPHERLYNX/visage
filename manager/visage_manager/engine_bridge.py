@@ -37,7 +37,6 @@ from pathlib import Path
 from typing import Any, Iterator, Optional
 
 from .errors import (
-    CameraUnavailableError,
     EngineUnavailableError,
     VisageError,
     StoreError,
@@ -970,7 +969,7 @@ def _average_embedding(samples: list[EnrollmentSample]) -> list[float]:
 
 
 def _cosine_distance(a: list[float], b: list[float]) -> float:
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=True))
     return max(0.0, min(2.0, 1.0 - dot))
 
 

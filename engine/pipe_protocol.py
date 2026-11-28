@@ -90,7 +90,7 @@ engine:  {"status": "success", "identity": "Fahad", "similarity": 0.71}\n
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 # ---------------------------------------------------------------------------
 # Message builders (engine -> CP)

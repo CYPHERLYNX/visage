@@ -32,10 +32,9 @@ from PyQt6.QtCore import (
     QObject, QEasingCurve, Qt, QThread, QTimer, QPropertyAnimation,
     pyqtSignal, pyqtSlot,
 )
-from PyQt6.QtGui import QColor, QImage, QPainter, QPixmap, QRegion
+from PyQt6.QtGui import QImage, QPixmap, QRegion
 from PyQt6.QtWidgets import (
-    QApplication, QDialog, QFrame, QGraphicsOpacityEffect, QHBoxLayout,
-    QLabel, QLineEdit, QPushButton, QStackedWidget, QVBoxLayout, QWidget,
+    QApplication, QDialog, QFrame, QGraphicsOpacityEffect, QLabel, QLineEdit, QPushButton, QStackedWidget, QVBoxLayout, QWidget,
 )
 
 from ..camera import Camera

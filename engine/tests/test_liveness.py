@@ -301,9 +301,7 @@ def test_challenge_fails_on_rigid_translation():
 
 
 def test_challenge_blink_needs_two_blinks():
-    import random
     v = ChallengeVerifier("blink")
-    tracker = BlinkTracker(window=60)
     frames = eye_roi_frames([1.0] * 3 + [0.05, 0.05] + [1.0] * 3 + [0.05, 0.05] + [1.0] * 4)
     iod = abs(EYE_R[0] - EYE_L[0])
     for f in frames:
@@ -328,7 +326,7 @@ def test_snapshot_shape_mirrors_liveness_snapshot():
     assert snap["mode"] == "heavy"
     assert snap["frame_count"] == 3
     assert snap["decision"] in ("pending", "live", "spoof", "needs_challenge")
-    for cue, state in snap["cues"].items():
+    for _cue, state in snap["cues"].items():
         assert set(state) == {"level", "confidence", "detail", "frames_counted",
                               "fired", "progress", "role", "explanation"}
         assert 0.0 <= state["progress"] <= 1.0

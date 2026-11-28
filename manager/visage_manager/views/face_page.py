@@ -11,7 +11,6 @@ from __future__ import annotations
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QPainter, QPainterPath, QPen
 from PyQt6.QtWidgets import (
-    QFrame,
     QGraphicsOpacityEffect,
     QHBoxLayout,
     QLabel,
@@ -24,7 +23,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from .. import theme
 from ..engine_bridge import EngineBridge, Identity
 from ..errors import StoreError, humanize, log_exception
 from ..widgets import Card, Toggle, Toast

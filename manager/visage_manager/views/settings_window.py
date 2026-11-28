@@ -157,7 +157,7 @@ def paint_icon(painter: QPainter, name: str, rect: QRectF, color: QColor) -> Non
         painter.drawPath(trap)
     elif name == "sparkle":
         pts = []
-        for i, (dx, dy) in enumerate(
+        for _i, (dx, dy) in enumerate(
             [(0, -0.42), (0.09, -0.09), (0.42, 0), (0.09, 0.09),
              (0, 0.42), (-0.09, 0.09), (-0.42, 0), (-0.09, -0.09)]
         ):

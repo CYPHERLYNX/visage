@@ -39,7 +39,7 @@ import math
 import random
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Deque, Dict, List, Optional, Sequence, Tuple
+from typing import Deque, Dict, List, Optional, Tuple
 
 import cv2
 import numpy as np

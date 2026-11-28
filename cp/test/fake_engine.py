@@ -78,7 +78,6 @@ def main():
     # approach: use pywin32 if available, else raw CreateNamedPipe via ctypes.
     try:
         import win32pipe
-        import win32api
 
         use_pywin32 = True
     except ImportError:

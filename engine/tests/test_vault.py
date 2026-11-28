@@ -103,7 +103,6 @@ def test_zero_wipes_buffer():
 
 def test_dev_fallback_warns_loudly(tmp_vault):
     # On non-Windows the dev fallback must warn on every use.
-    import warnings
     if os.name == "nt":
         pytest.skip("dev fallback is non-Windows only")
     with pytest.warns(RuntimeWarning):
